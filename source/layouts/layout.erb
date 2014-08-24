@@ -1,0 +1,49 @@
+<% site_name = 'daimatz.net' %>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<meta http-equiv="imagetoolbar" content="no" />
+<meta name="description" content="daimatz の個人サイト" />
+<meta name="keywords" content="daimatz" />
+<%= stylesheet_link_tag 'normalize', 'common', 'syntax' %>
+<%= javascript_include_tag 'jquery', 'common' %>
+<title><%= current_page.data.title %> - <%= site_name %> -</title>
+<%= favicon_tag '/static/img/favicon.ico' %>
+</head>
+<body>
+<div id="top">
+   <div id="header">
+      <h1><a href="/"><%= site_name %></a></h1>
+      <div id="navi">
+         <ul>
+         <li><%= link_to image_tag('rss.png', alt: 'rss'), '/text/atom.xml' %></li>
+         <li><%= link_to image_tag('twitter.png', alt: 'twitter'), 'https://twitter.com/daimatz' %></li>
+         <li><%= link_to image_tag('github.png', alt: 'twitter'), 'https://github.com/daimatz' %></li>
+         </ul>
+      </div><!-- /#navi-->
+   </div><!-- /#header-->
+   <div id="menu">
+      <ul>
+      <li><%= link_to 'Home', '/' %></li>
+      <li><%= link_to 'Text', '/text/' %></li>
+      <li><%= link_to 'About', '/about.html' %></li>
+      </ul>
+   </div><!-- /#menu-->
+   <div id="contents">
+      <h1><%= current_page.data.title %></h1>
+      <%= yield %>
+   </div><!-- /#contents-->
+   <div id="pageTop">
+      <a href="#top">ページのトップへ戻る</a>
+   </div><!-- /#pageTop-->
+   <div id="footer">
+      <div class="copyright">
+          <p>Copyright &copy; 2014 daimatz</p>
+      </div>
+   </div><!-- /#footer-->
+</div><!-- /#top-->
+</body>
+</html>

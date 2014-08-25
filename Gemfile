@@ -15,3 +15,5 @@ gem "tzinfo-data", platforms: [:mswin, :mingw]
 
 gem "middleman-syntax"
 gem 'therubyracer'
+gem 'middleman-blog'
+gem 'redcarpet'

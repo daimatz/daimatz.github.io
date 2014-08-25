@@ -1,10 +1,14 @@
 ---
-title: Welcome to Middleman
+title: Home
 ---
 
-<div class="welcome">
-  <h1>Middleman is Watching</h1>
-  <p class="doc">
-    <%= link_to "Read Online Documentation", "http://middlemanapp.com/" %>
-  </p><!-- .doc -->
-</div><!-- .welcome -->
+ここは @daimatz の個人サイトです。いろいろ増える予定
+
+<h2>Recent Posts</h2>
+<ul>
+<% blog.articles[0...5].each do |article| %>
+    <li><%= link_to article.title, article.url %></li>
+<% end %>
+</ul>
+
+<p><a href="/text/index.html">...all</a></p>

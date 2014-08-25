@@ -70,3 +70,16 @@ configure :build do
   # Or use a different image path
   # set :http_prefix, "/Content/images/"
 end
+
+set :markdown_engine, :redcarpet
+set :markdown, fenced_code_blocks: true, smartypants: true
+
+Time.zone = 'Tokyo'
+
+activate :blog do |blog|
+  blog.prefix = 'text'
+  blog.sources = '{year}/{month}{day}-{title}.html'
+  blog.permalink = '{year}/{month}{day}-{title}.html'
+  blog.default_extension = '.md'
+  blog.taglink = ':tag.html'
+end

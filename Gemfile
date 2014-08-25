@@ -14,6 +14,7 @@ gem "wdm", "~> 0.1.0", :platforms => [:mswin, :mingw]
 gem "tzinfo-data", platforms: [:mswin, :mingw]
 
 gem "middleman-syntax"
-gem 'therubyracer'
-gem 'middleman-blog'
-gem 'redcarpet'
+gem "therubyracer"
+gem "middleman-blog"
+gem "redcarpet"
+gem "builder", "~> 3.0"

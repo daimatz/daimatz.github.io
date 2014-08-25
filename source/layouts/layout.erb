@@ -1,4 +1,3 @@
-<% site_name = 'daimatz.net' %>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
 <head>
@@ -10,7 +9,7 @@
 <meta name="keywords" content="daimatz" />
 <%= stylesheet_link_tag 'normalize', 'common', 'syntax' %>
 <%= javascript_include_tag 'jquery', 'common' %>
-<title><%= current_page.data.title %> - <%= site_name %> -</title>
+<title><%= current_page.data.title %> - <%= config[:site_name] %> -</title>
 <%= favicon_tag '/static/img/favicon.ico' %>
 </head>
 <body>

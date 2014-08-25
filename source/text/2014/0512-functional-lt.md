@@ -25,7 +25,7 @@ Scala で初めて Future という概念を知ったのだけど、触り始め
 全然似てねえよバカ」とかマサカリが飛んでくることも覚悟していたけど概ね生暖かく迎
 えられたようで安心した。
 
-後で [\@eagletmt][eagletmt] 氏に「あれってモナドだって言ってるだけですよねえ」と
+後で [@eagletmt][eagletmt] 氏に「あれってモナドだって言ってるだけですよねえ」と
 突っ込まれたのでそのへんの話を追記した。たしかにモナドの特徴を言っているだけだが
 、重要なのは基本的に Future は一方向性のモナドであるということで、気軽にブロック
 して中身を取り出すようなことをやってはいけないのである。 Twitter の
@@ -77,14 +77,15 @@ twitter/util はこのへんうまく出来ていて、呼んでいる Future �
 
 ## その他
 
-[\@rejasupotaro][rejasupotaro] さんとは以前[第7回若手Webエンジニア交流会
-][wakateweb]で少しだけ話したのだが、昨日はより突っ込んだ話をした。
+[@rejasupotaro][rejasupotaro] さんとは以前
+[第7回若手Webエンジニア交流会][wakateweb]で少しだけ話したのだが、
+昨日はより突っ込んだ話をした。
 Twitter のオープンソースのコードを読んでいると、 Scala の標準ライブラリに比べて
 ケチくさい最適化を頑張っていないように見えるとか、 Twitter をしてもまだ Netty 4
 に乗り換えられない感じなんだろうなあとか。結論としてはジャバこそが実用的な言語と
 いうことになった。
 <blockquote class="twitter-tweet" lang="en"><p>レジャスポ氏に「時代はジャバだ」と力説してしまった <a href="https://twitter.com/search?q=%23functionalLT&amp;src=hash">#functionalLT</a></p>&mdash; matsumoto (@daimatz) <a href="https://twitter.com/daimatz/statuses/465398393276088321">May 11, 2014</a></blockquote><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-帰りで少し一緒になった [\@taiki45][taiki45] さんともそんな話をした。もうちょっと
+帰りで少し一緒になった [@taiki45][taiki45] さんともそんな話をした。もうちょっと
 我々のアプローチがどの程度どうなのかという話とか、他のカイシャさんでそのへんどう
 しているのとかいう話を聞きたい気もした。
 

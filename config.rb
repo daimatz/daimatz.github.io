@@ -81,5 +81,22 @@ activate :blog do |blog|
   blog.sources = '{year}/{month}{day}-{title}.html'
   blog.permalink = '{year}/{month}{day}-{title}.html'
   blog.default_extension = '.md'
-  blog.taglink = ':tag.html'
+  blog.taglink = '{tag}.html'
+  blog.tag_template = 'tag.html'
+end
+
+page '/text/atom.xml', layout: false
+
+{
+  author: 'daimatz',
+  site_name: 'daimatz.net',
+  site_url: 'http://daimatz.net',
+}.each do |k, v|
+  set k, v
+end
+
+class Redcarpet::Render::HTML
+  def preprocess(text)
+    text.gsub(/([^\x01-\x7E])\n([^\x01-\x7E])/, '\1\2')
+  end
 end

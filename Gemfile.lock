@@ -143,6 +143,7 @@ DEPENDENCIES
   middleman-livereload (~> 3.1.0)
   middleman-syntax
   redcarpet
+  rouge
   therubyracer
   tzinfo-data
   wdm (~> 0.1.0)

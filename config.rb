@@ -47,11 +47,11 @@
 #   end
 # end
 
-set :css_dir, '/static/css'
+set :css_dir, '/css'
 
-set :js_dir, '/static/js'
+set :js_dir, '/js'
 
-set :images_dir, '/static/img'
+set :images_dir, '/img'
 
 # Build-specific configuration
 configure :build do
@@ -72,7 +72,7 @@ configure :build do
 end
 
 set :markdown_engine, :redcarpet
-set :markdown, fenced_code_blocks: true, smartypants: true
+set :markdown, fenced_code_blocks: true
 
 Time.zone = 'Tokyo'
 
@@ -82,7 +82,7 @@ activate :blog do |blog|
   blog.permalink = '{year}/{month}{day}-{title}.html'
   blog.default_extension = '.md'
   blog.taglink = '{tag}.html'
-  blog.tag_template = 'tag.html'
+  blog.tag_template = 'text/tag.html'
 end
 
 page '/text/atom.xml', layout: false
@@ -100,3 +100,5 @@ class Redcarpet::Render::HTML
     text.gsub(/([^\x01-\x7E])\n([^\x01-\x7E])/, '\1\2')
   end
 end
+
+activate :syntax, line_numbers: true

@@ -18,3 +18,4 @@ gem "therubyracer"
 gem "middleman-blog"
 gem "redcarpet"
 gem "builder", "~> 3.0"
+gem 'rouge'

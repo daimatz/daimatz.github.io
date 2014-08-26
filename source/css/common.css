@@ -227,14 +227,14 @@ li {
    margin:0 0 1em 1em;
 }
 
-#contents table {
+#contents table td.code {
    width:100%;
    border-collapse: collapse;
 }
 
 #contents table th {
    padding:5px;
-   font-size:12px;
+   font-size:13px;
    text-align:left;
    border:1px solid #ddd;
    background:#cfcfcf;
@@ -242,7 +242,7 @@ li {
 
 #contents table td {
    padding:5px;
-   font-size:12px;
+   font-size:13px;
    text-align:left;
    border:1px solid #ddd;
 }

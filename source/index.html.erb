@@ -7,7 +7,11 @@ title: Home
 <h2>Recent Posts</h2>
 <ul>
 <% blog.articles[0...5].each do |article| %>
-    <li><%= link_to article.title, article.url %></li>
+    <li>
+      <%= link_to article.title, article %>
+      (<span><%= article.date.strftime(config[:time_format]) %></span>)<br/>
+      <%= article.data[:description] %>
+    </li>
 <% end %>
 </ul>
 

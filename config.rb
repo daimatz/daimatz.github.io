@@ -47,6 +47,9 @@
 #   end
 # end
 
+# page '/text/*.html', layout: :text_tag
+page '/text/*/*', layout: :text_item
+
 set :css_dir, '/css'
 
 set :js_dir, '/js'
@@ -91,6 +94,7 @@ page '/text/atom.xml', layout: false
   author: 'daimatz',
   site_name: 'daimatz.net',
   site_url: 'http://daimatz.net',
+  time_format: '%Y-%m-%d',
 }.each do |k, v|
   set k, v
 end

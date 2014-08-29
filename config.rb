@@ -89,7 +89,7 @@ activate :blog do |blog|
 end
 
 page '/text/atom.xml', layout: false
-page '/googlef8582dcb4b11bcd0.html', layout: false
+page 'CNAME', layout: false
 
 {
   author: 'daimatz',

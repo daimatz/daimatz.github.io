@@ -5,8 +5,8 @@
 <meta http-equiv="Content-Style-Type" content="text/css" />
 <meta http-equiv="Content-Script-Type" content="text/javascript" />
 <meta http-equiv="imagetoolbar" content="no" />
-<meta name="description" content="daimatz の個人サイト" />
-<meta name="keywords" content="daimatz" />
+<meta name="description" content="<%= config[:author] %> の個人サイト" />
+<meta name="keywords" content="<%= config[:author] %>" />
 <%= stylesheet_link_tag 'normalize', 'common', 'syntax' %>
 <%= javascript_include_tag 'jquery', 'common' %>
 <title><%= current_page.data.title %> - <%= config[:site_name] %> -</title>
@@ -19,8 +19,8 @@
       <div id="navi">
          <ul>
          <li><%= link_to image_tag('rss.png', alt: 'rss'), '/text/atom.xml' %></li>
-         <li><%= link_to image_tag('twitter.png', alt: 'twitter'), 'https://twitter.com/daimatz' %></li>
-         <li><%= link_to image_tag('github.png', alt: 'twitter'), 'https://github.com/daimatz' %></li>
+         <li><%= link_to image_tag('twitter.png', alt: 'twitter'), 'https://twitter.com/' + config[:twitter] %></li>
+         <li><%= link_to image_tag('github.png', alt: 'twitter'), 'https://github.com/' + config[:github] %></li>
          </ul>
       </div><!-- /#navi-->
    </div><!-- /#header-->
@@ -40,7 +40,7 @@
    </div><!-- /#pageTop-->
    <div id="footer">
       <div class="copyright">
-          <p>Copyright &copy; 2014 daimatz</p>
+          <p>Copyright &copy; 2014 <%= config[:author] %></p>
       </div>
    </div><!-- /#footer-->
 </div><!-- /#top-->

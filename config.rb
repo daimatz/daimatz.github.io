@@ -89,12 +89,16 @@ activate :blog do |blog|
 end
 
 page '/text/atom.xml', layout: false
+page '/googlef8582dcb4b11bcd0.html', layout: false
 
 {
   author: 'daimatz',
   site_name: 'daimatz.net',
   site_url: 'http://daimatz.net',
   time_format: '%Y-%m-%d',
+  twitter: 'daimatz',
+  github: 'daimatz',
+  facebook: 'daimatz',
 }.each do |k, v|
   set k, v
 end

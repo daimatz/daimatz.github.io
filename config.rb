@@ -110,3 +110,4 @@ class Redcarpet::Render::HTML
 end
 
 activate :syntax, line_numbers: true
+activate :livereload

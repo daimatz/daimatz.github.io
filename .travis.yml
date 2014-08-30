@@ -6,7 +6,7 @@ env:
     - GIT_COMMITTER_EMAIL=dai@daimatz.net
     - GIT_AUTHOR_NAME=daimatz
     - GIT_AUTHOR_EMAIL=dai@daimatz.net
-# bundle exec travis encrypt -r daimatz/daimatz.github.io "GH_TOKEN=<token>"
+# travis encrypt -r daimatz/daimatz.github.io "GH_TOKEN=<token>"
     - secure: "ee2cqUyzS9DfaFrGSFNIKFLWHO/Ms2F18XB5V6EvJ9y/xjbsDwpnkRopQSLfC2Yo5r3wJQFtnA4UjBzjEB4DFVvhxl4bzqBiRzulChtQvnurLfb6FEXdxG1rZQQhddX5kcZ1qrbDMWT85zd/goQLUtH1f3vr2L/THRUWrzeEnjM="
 before_script:
     - git clone --quiet https://github.com/daimatz/daimatz.github.io build
@@ -15,5 +15,5 @@ script:
 after_success:
     - cd build
     - git add -A .
-    - git commit -m "Update (`LANG=C date '+%Y-%m-%d (%a) %T %z'`)"
-    - '[ "$TRAVIS_BRANCH" == "source" ] && [ $GH_TOKEN ] && git push --quiet https://$GH_TOKEN@github.com/daimatz/daimatz.github.io master 2> /dev/null'
+    - git commit -m "Update [ci skip] (`LANG=C date '+%Y-%m-%d %T %z'`)"
+    - '[ "$TRAVIS_BRANCH" == "source" ] && git push --quiet https://$GH_TOKEN@github.com/daimatz/daimatz.github.io master 2> /dev/null'

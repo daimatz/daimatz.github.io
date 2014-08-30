@@ -1,0 +1,1731 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>daimatz.net</title>
+  <id>http://daimatz.net/text</id>
+  <link href="http://daimatz.net/text"/>
+  <link href="http://daimatz.net/text/atom.xml" rel="self"/>
+  <updated>2014-08-29T15:00:00+00:00</updated>
+  <author>
+    <name>daimatz</name>
+  </author>
+  <entry>
+    <title>Middleman と GitHub Pages でブログを作った話</title>
+    <link rel="alternate" href="http://daimatz.net/text/2014/0830-middleman-github-pages.html"/>
+    <id>http://daimatz.net/text/2014/0830-middleman-github-pages.html</id>
+    <published>2014-08-29T15:00:00+00:00</published>
+    <updated>2014-08-29T15:00:00+00:00</updated>
+    <author>
+      <name>daimatz</name>
+    </author>
+    <content type="html">&lt;h2&gt;tl;dr&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="http://middlemanapp.com/"&gt;Middleman&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://pages.github.com/"&gt;GitHub Pages&lt;/a&gt; のユーザーサイト&lt;/li&gt;
+&lt;li&gt;独自ドメイン使用&lt;/li&gt;
+&lt;li&gt;ソースを push すると &lt;a href="https://travis-ci.org/"&gt;Travis CI&lt;/a&gt; がデプロイ&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;Middleman&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href="http://middlemanapp.com/"&gt;Middleman&lt;/a&gt; は最近よく使われている気がする静的サイトジェネレータ。少し前から静的サイトジェネレータは Middleman 一強感あったので流行に乗り遅れまいと使ってみることにした。この種のソフトウェアで Ruby 製のものは古くから &lt;a href="http://jekyllrb.com/"&gt;Jekyll&lt;/a&gt; が有名でしたが、
+Middleman だと Asset Pipeline の概念だったりテンプレートに erb, haml, slim が使えたりといったところで Rails に近いっぽいところが受けているのだとか。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="http://middlemanapp.com/basics/getting-started/"&gt;公式のチュートリアル&lt;/a&gt;と、&lt;a href="http://middlemanapp.com/jp/basics/getting-started/"&gt;その日本語版&lt;/a&gt;が充実しているので一通り読めばだいたいのことはできる気がします。以下、ハマったところやちょっとしたカスタマイズだけ。&lt;/p&gt;
+
+&lt;h3&gt;後からブログ仕様にする&lt;/h3&gt;
+
+&lt;p&gt;&lt;code&gt;middleman init&lt;/code&gt; するときに &lt;code&gt;--template=blog&lt;/code&gt; を付けずに実行してしまい
+(というかこんなオプションがあるのを知らなかった) 、ある程度サイトを作ってからブログ機能をつけることになってしまった。するとブログテンプレートを使った場合の
+&lt;code&gt;config.rb&lt;/code&gt; や他のファイルの中身がわからないので、解説サイトを見ても何のことだかわからない、ということがあった。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="https://github.com/middleman/middleman-blog/tree/master/lib/middleman-blog/template"&gt;middleman-blog/lib/middleman-blog/template&lt;/a&gt; にテンプレートファイルが一通り置いてあるので、これをコピーすれば良い。&lt;/p&gt;
+
+&lt;h3&gt;VM 内で livereload&lt;/h3&gt;
+
+&lt;p&gt;&lt;a href="https://github.com/middleman/middleman-livereload"&gt;middleman-livereload&lt;/a&gt; という拡張があり、これは記事を書いている途中に保存すると勝手にブラウザがリロードしてくれるものです。使っている &lt;a href="https://github.com/johnbintz/rack-livereload"&gt;rack-livereload&lt;/a&gt; がファイルの変更を検知して
+WebSocket でブラウザ側に伝えて、 JavaScript でリロードとかやっているっぽい。以前似たようなものを書いたことがあるのであーあんな感じだろうなと想像しつつ。&lt;/p&gt;
+
+&lt;p&gt;最近は &lt;a href="http://vagrantup.com/"&gt;Vagrant&lt;/a&gt; で全部 VM の中でやるようにしているのですが、ネットワーク共有をポートフォワードでやっている場合は rack-livereload
+のデフォルトである 35729 番をフォワードしておく必要があります。あと、 middleman のプレビューのデフォルトである 4567 番もフォワードしておきます。&lt;/p&gt;
+&lt;div class="highlight ruby"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;config&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;vm&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;network&lt;/span&gt; &lt;span class="s2"&gt;"forwarded_port"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="ss"&gt;guest: &lt;/span&gt;&lt;span class="mi"&gt;4567&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="ss"&gt;host: &lt;/span&gt;&lt;span class="mi"&gt;4567&lt;/span&gt; &lt;span class="c1"&gt;# middleman&lt;/span&gt;
+&lt;span class="n"&gt;config&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;vm&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;network&lt;/span&gt; &lt;span class="s2"&gt;"forwarded_port"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="ss"&gt;guest: &lt;/span&gt;&lt;span class="mi"&gt;35729&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="ss"&gt;host: &lt;/span&gt;&lt;span class="mi"&gt;35729&lt;/span&gt; &lt;span class="c1"&gt;# livereload&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;そして &lt;code&gt;config.rb&lt;/code&gt; に &lt;code&gt;activate :livereload&lt;/code&gt; を書いておく。すると&lt;/p&gt;
+&lt;div class="highlight shell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="gp"&gt;$ &lt;/span&gt;middleman
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;と打つと &lt;code&gt;localhost:4567&lt;/code&gt; でプレビューでき、 livereload もできる。&lt;/p&gt;
+
+&lt;h3&gt;日本語で80行で改行するのを無視する&lt;/h3&gt;
+
+&lt;p&gt;エディタで書くときは80文字で折り返したいのだけど、日本語の場合それを普通にレンダリングさせてブラウザで見ると改行位置で半角スペースが開いてしまう。それが嫌だったので、 Markdown レンダリングエンジンをいじって改行を取り除く処理をつけている。
+&lt;a href="https://github.com/vmg/redcarpet"&gt;Redcarpet&lt;/a&gt; での処理。&lt;/p&gt;
+&lt;div class="highlight ruby"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Redcarpet&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="no"&gt;Render&lt;/span&gt;&lt;span class="o"&gt;::&lt;/span&gt;&lt;span class="no"&gt;HTML&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;preprocess&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;text&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="n"&gt;text&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nf"&gt;gsub&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="sr"&gt;/([^\x01-\x7E])\n([^\x01-\x7E])/&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;'\1\2'&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+  &lt;span class="k"&gt;end&lt;/span&gt;
+&lt;span class="k"&gt;end&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;これを &lt;code&gt;config.rb&lt;/code&gt; に書いておけば良い。&lt;/p&gt;
+
+&lt;h3&gt;シンタックスハイライト&lt;/h3&gt;
+
+&lt;p&gt;シンタックスハイライトは &lt;a href="https://github.com/jneen/rouge"&gt;Rouge&lt;/a&gt; を Gemfile に書いておくだけ。少し使ってみている限りは特に問題なさそう。&lt;/p&gt;
+
+&lt;h2&gt;GitHub Pages のユーザーサイト&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href="https://pages.github.com/"&gt;GitHub Pages&lt;/a&gt; は github.io ドメインで静的なファイルをホスティングできるサービス。
+&lt;a href="https://help.github.com/articles/user-organization-and-project-pages"&gt;User や Organization のページと Project ごとのページの2種類&lt;/a&gt;
+あるが、ここでは個人ページを作ることを想定しているので User &amp;amp; Organization のほうを使う。&lt;/p&gt;
+
+&lt;p&gt;この場合、 User もしくは Organization に &lt;code&gt;[user or organization].github.io&lt;/code&gt; というリポジトリを作り、その master ブランチに静的ファイルを push することで
+&lt;code&gt;https://[user or organization].github.io&lt;/code&gt; にアクセスできるようになる。自分の場合は &lt;a href="https://github.com/daimatz/daimatz.github.io"&gt;daimatz.github.io&lt;/a&gt; とする。&lt;/p&gt;
+
+&lt;h2&gt;独自ドメイン使用&lt;/h2&gt;
+
+&lt;p&gt;GitHub Pages で独自ドメインを使う場合やることは以下のとおり：&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;DNS レコードの設定&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CNAME&lt;/code&gt; ファイルを置く&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3&gt;DNS レコードの設定&lt;/h3&gt;
+
+&lt;p&gt;CNAME を設定する方法と A レコードを設定する方法がある。自分の場合は &lt;code&gt;daimatz.net&lt;/code&gt; を使いたかったので、「&lt;a href="https://help.github.com/articles/setting-up-a-custom-domain-with-github-pages"&gt;apex domain の場合は A レコードを設定せよ&lt;/a&gt;」との指示通り A レコードを設定する。&lt;/p&gt;
+
+&lt;p&gt;ググると &lt;code&gt;204.232.175.78&lt;/code&gt; を使うといい、という情報が見つかるのだが、一度それで
+push すると「その IP アドレスは deprecated なので&lt;a href="https://help.github.com/articles/setting-up-a-custom-domain-with-github-pages"&gt;公式ページ&lt;/a&gt;に書いてある正しいものを使ってね」というメールが来た。そこから
+&lt;a href="https://help.github.com/articles/tips-for-configuring-an-a-record-with-your-dns-provider"&gt;A レコードの設定&lt;/a&gt;ページに飛ぶと、現時点では&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;192.30.252.153&lt;/li&gt;
+&lt;li&gt;192.30.252.154&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;の2つを使えと書いてある。&lt;/p&gt;
+
+&lt;p&gt;自分は VALUE DOMAIN を使っているので DNS 設定ページで次のように記入した。&lt;/p&gt;
+&lt;div class="highlight plaintext"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;a @ 192.30.252.153
+a @ 192.30.252.154
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;h3&gt;CNAME ファイルを置く&lt;/h3&gt;
+
+&lt;p&gt;GitHub Pages リポジトリの master ブランチ直下に &lt;code&gt;CNAME&lt;/code&gt; というファイルを置き、その中に独自ドメインを書く。すると、 &lt;code&gt;http://[user or organization].github.io&lt;/code&gt; にアクセスされたときにそのドメインにリダイレクトしてくれる。&lt;/p&gt;
+
+&lt;p&gt;middleman を使う場合、 &lt;code&gt;source/&lt;/code&gt; 直下に置いて次のようにするのが良いと思う。&lt;/p&gt;
+&lt;div class="highlight ruby"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;page&lt;/span&gt; &lt;span class="s1"&gt;'CNAME'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="ss"&gt;layout: &lt;/span&gt;&lt;span class="kp"&gt;false&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;h2&gt;ソースを push すると Travis CI がデプロイ&lt;/h2&gt;
+
+&lt;p&gt;Travis CI は言わずと知れたクラウド CI サービスですが、これをデプロイに使おうとすると少し面倒な設定が必要になる。ビルドログがダダ漏れなので認証情報をそのまま書くわけにはいかない。&lt;/p&gt;
+
+&lt;h3&gt;認証情報の持ち方&lt;/h3&gt;
+
+&lt;p&gt;まず Travis が GitHub リポジトリに push できるようにする方法だが、これはアプリケーション登録して Access Token を設定すれば良い。
+&lt;a href="https://github.com/settings/applications"&gt;自分の設定の Applications ページ&lt;/a&gt;に行き、 Personal
+access tokens の Generate new token からトークンを生成する。&lt;/p&gt;
+
+&lt;p&gt;さて、そのトークンを Travis に教える方法だが、このために &lt;a href="http://docs.travis-ci.com/user/encryption-keys/"&gt;Travis CI に暗号化の仕組みがある&lt;/a&gt;。 travis コマンドを使って次のようにする。&lt;/p&gt;
+&lt;div class="highlight shell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="gp"&gt;$ &lt;/span&gt;gem install travis
+&lt;span class="gp"&gt;$ &lt;/span&gt;travis encrypt -r daimatz/daimatz.github.io &lt;span class="s2"&gt;"GH_TOKEN=&amp;lt;token&amp;gt;"&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;そして &lt;code&gt;.travis.yml&lt;/code&gt; に次のように書く。&lt;/p&gt;
+&lt;div class="highlight yaml"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="s"&gt;env&lt;/span&gt;&lt;span class="pi"&gt;:&lt;/span&gt;
+  &lt;span class="s"&gt;global&lt;/span&gt;&lt;span class="pi"&gt;:&lt;/span&gt;
+    &lt;span class="pi"&gt;-&lt;/span&gt; &lt;span class="s"&gt;secure&lt;/span&gt;&lt;span class="pi"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;"&lt;/span&gt;&lt;span class="s"&gt;.............."&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;すると、ビルド時に復号化した &lt;code&gt;GH_TOKEN=&amp;lt;token&amp;gt;&lt;/code&gt; が展開される。もちろんビルドログには表示されない。&lt;/p&gt;
+
+&lt;h3&gt;Travis が master ブランチを push&lt;/h3&gt;
+
+&lt;p&gt;&lt;code&gt;[user or organization].github.io&lt;/code&gt; ではデプロイするファイルは master ブランチに置かなければならない。そこで、ソースはすべて source ブランチに置いておき、
+source ブランチを push すると Travis が master ブランチに成果物を commit して
+push という手順をとることになる。 master に push する用のリポジトリを build というディレクトリで clone してきて、 &lt;code&gt;middleman build&lt;/code&gt; したときに build ディレクトリに入るようにする。具体的には次のような感じ。&lt;/p&gt;
+&lt;div class="highlight yaml"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="s"&gt;before_script&lt;/span&gt;&lt;span class="pi"&gt;:&lt;/span&gt;
+    &lt;span class="pi"&gt;-&lt;/span&gt; &lt;span class="s"&gt;git clone --quiet https://github.com/daimatz/daimatz.github.io build&lt;/span&gt;
+&lt;span class="s"&gt;script&lt;/span&gt;&lt;span class="pi"&gt;:&lt;/span&gt;
+    &lt;span class="pi"&gt;-&lt;/span&gt; &lt;span class="s"&gt;bundle exec middleman build&lt;/span&gt;
+&lt;span class="s"&gt;after_success&lt;/span&gt;&lt;span class="pi"&gt;:&lt;/span&gt;
+    &lt;span class="pi"&gt;-&lt;/span&gt; &lt;span class="s"&gt;cd build&lt;/span&gt;
+    &lt;span class="pi"&gt;-&lt;/span&gt; &lt;span class="s"&gt;git add -A .&lt;/span&gt;
+    &lt;span class="pi"&gt;-&lt;/span&gt; &lt;span class="s"&gt;git commit -m "Update [ci skip]"&lt;/span&gt;
+    &lt;span class="pi"&gt;-&lt;/span&gt; &lt;span class="s1"&gt;'&lt;/span&gt;&lt;span class="s"&gt;[&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;"$TRAVIS_BRANCH"&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;==&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;"source"&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;]&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;&amp;amp;&amp;amp;&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;git&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;push&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;--quiet&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;https://$GH_TOKEN@github.com/daimatz/daimatz.github.io&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;master&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;2&amp;gt;&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;/dev/null'&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;&lt;code&gt;git push&lt;/code&gt; 時に &lt;code&gt;--quiet&lt;/code&gt; を付けないとトークンが表示されてしまうので注意。&lt;/p&gt;
+
+&lt;p&gt;Travis では&lt;a href="http://docs.travis-ci.com/user/how-to-skip-a-build/"&gt;コミットメッセージに
+&lt;code&gt;[ci skip]&lt;/code&gt; という文字列を入れておくと、そのコミットについてはビルドしない&lt;/a&gt;。こうしないと Travis が master ブランチに push したコミットについてまた CI が走ってしまい、 &lt;code&gt;.travis.yml&lt;/code&gt; がないためビルドが失敗してエラーメールが飛んでくることになる。&lt;/p&gt;
+
+&lt;h2&gt;まとめ&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href="https://github.com/daimatz/daimatz.github.io/tree/source"&gt;ソースを見てもらう&lt;/a&gt;のが一番わかりやすい気がする。&lt;/p&gt;
+</content>
+  </entry>
+  <entry>
+    <title>関数型LT大会で話したこと</title>
+    <link rel="alternate" href="http://daimatz.net/text/2014/0512-functional-lt.html"/>
+    <id>http://daimatz.net/text/2014/0512-functional-lt.html</id>
+    <published>2014-05-11T15:00:00+00:00</published>
+    <updated>2014-05-11T15:00:00+00:00</updated>
+    <author>
+      <name>daimatz</name>
+    </author>
+    <content type="html">&lt;h2&gt;関数型LT大会&lt;/h2&gt;
+
+&lt;p&gt;クックパッド社で行われていた&lt;a href="http://sugoihaskell.github.io/"&gt;すごいHaskellたのしく学ぼう輪読会&lt;/a&gt;
+の完走を記念して&lt;a href="http://connpass.com/event/5795/"&gt;関数型LT大会という会が開催された&lt;/a&gt;。クックパッド関係なく関数型に興味ある人が集まってワイワイする感じっぽかったので、ひとつなにか話して叩かれに行ってみるかと思って発表してきた。そういえばクックパッド社に行くのは2回目であった。&lt;/p&gt;
+
+&lt;h2&gt;自分の発表&lt;/h2&gt;
+
+&lt;script async class="speakerdeck-embed" data-id="1701f420bb5a0131d135622ec9067e44" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"&gt;&lt;/script&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;p&gt;Scala で初めて Future という概念を知ったのだけど、触り始めの頃はどういうコードを書けばいいのかも全然良くわからなくて苦しんでいた。ふと「これって Haskell の IO
+と同じじゃね？」と気づいてから急に視界が開けた気がしたので、そのへんのことを話してきた。ググっても「Future と IO 似ているよね」という説は全然見つからず、「いや全然似てねえよバカ」とかマサカリが飛んでくることも覚悟していたけど概ね生暖かく迎えられたようで安心した。&lt;/p&gt;
+
+&lt;p&gt;後で &lt;a href="https://twitter.com/eagletmt"&gt;@eagletmt&lt;/a&gt; 氏に「あれってモナドだって言ってるだけですよねえ」と突っ込まれたのでそのへんの話を追記した。たしかにモナドの特徴を言っているだけだが、重要なのは基本的に Future は一方向性のモナドであるということで、気軽にブロックして中身を取り出すようなことをやってはいけないのである。 Twitter の
+Effective Scala にも&lt;a href="http://twitter.github.io/effectivescala/#Concurrency-Futures"&gt;そのへんことが書いてある&lt;/a&gt;し、
+Finagle について書かれたドキュメントを見るとブロックするなと書いてあるのが頻繁に見つかる。
+&lt;s&gt;そのへん理解してないんじゃないかなーと思うコードに以前苦しめられた過去が&lt;/s&gt;&lt;/p&gt;
+
+&lt;p&gt;ある関数内で Future を呼んでいるのにその戻り値が &lt;code&gt;Future[A]&lt;/code&gt; というシグネチャになっていない関数 (こういう関数を簡単に書けてしまう) というのは、よほどのことがない限りアンチパターンである。具体的に許されるのは次の2パターンくらいしかないんじゃないかなーと思っている。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;一番最後に IO 処理をして終わる場合&lt;/li&gt;
+&lt;li&gt;タイムアウトを設定し、それまでに戻って来なかったら切り捨てて計算を続ける場合&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;1 は Future 内で行われる IO 処理を「投げっぱなし」にすることで、その IO 処理内で適切にエラーハンドリングされており自分でエラーハンドリングを書かなくていいと確信できる場合である。その場合は途中で呼んだ Future を投げっぱなしにして、非同期で
+IO 処理だけさせてメインスレッドは次に進むということをやって良い。&lt;/p&gt;
+
+&lt;p&gt;2 は必要な情報が全部は集まっていないけどとりあえずレスポンスを返さなきゃいけないような場面において、呼んだ Future がタイムアウト前に返ってこなければ見捨てるというもの。ある意味同期処理なわけで、基本的にはやってはいけないがタイムアウトという条件が付いているなら話は別だ。タイムアウト時間とそのイベントハンドラを登録し、それが呼ばれた時点で対象の Future に対してそれが完了しているか否かを問い合わせ、完了していれば中身の値を取得して同期的に次の計算に移ることになるので Future
+の文脈は消える。戻ってこなかった場合はその Future をキャンセルしておく
+(&lt;code&gt;com.twitter.util.Future&lt;/code&gt; では &lt;code&gt;raise(new FutureCancelledException)&lt;/code&gt; を呼ぶ)
+のがたぶんマナー的に正しい。&lt;/p&gt;
+
+&lt;p&gt;twitter/util はこのへんうまく出来ていて、呼んでいる Future が戻ってきたら処理を続けるとか、あるいは同時に呼んでいるどれかが戻ってきたら処理を続けるみたいな、イベント駆動な設計になっている。 &lt;code&gt;select&lt;/code&gt; とか &lt;code&gt;epoll&lt;/code&gt; といった UNIX
+システムコールに関連した話になってくるわけだが、 &lt;code&gt;com.twitter.util.Future&lt;/code&gt; には
+&lt;code&gt;select&lt;/code&gt; と &lt;code&gt;poll&lt;/code&gt; という名前そのままの API がある。
+&lt;code&gt;scala.concurrent.Future&lt;/code&gt; にはその手の話はないっぽい？システムコールレベルではまだあまり使ったことがないので触ってみないと…&lt;/p&gt;
+
+&lt;h2&gt;他人の発表&lt;/h2&gt;
+
+&lt;p&gt;勉強会での発表というものは自分が勉強するためにあるものであって、自分が勉強したことに比べれば話す内容は他人にとってもわかりやすくするものであると思っていた。だが他の人達の発表を聞いていても意図的にレベルを落としたように感じられるものはなく、むしろみんな全力で準備している感じがしてすごかった。「それ知ってるよ〜」という類のものはほとんどなかったし、自分の到底理解の及ばない型レベルガチ勢の方々の発表もわかりやすくて面白かった。 LLVM や TaPL, さらには圏論が一般教養として扱われていた感もあり関数型界隈はレベル高いなあと思った。&lt;/p&gt;
+
+&lt;h2&gt;その他&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href="https://twitter.com/rejasupotaro"&gt;@rejasupotaro&lt;/a&gt; さんとは以前
+&lt;a href="http://www.zusaar.com/event/3477003"&gt;第7回若手Webエンジニア交流会&lt;/a&gt;で少しだけ話したのだが、昨日はより突っ込んだ話をした。
+Twitter のオープンソースのコードを読んでいると、 Scala の標準ライブラリに比べてケチくさい最適化を頑張っていないように見えるとか、 Twitter をしてもまだ Netty 4
+に乗り換えられない感じなんだろうなあとか。結論としてはジャバこそが実用的な言語ということになった。
+&lt;blockquote class="twitter-tweet" lang="en"&gt;&lt;p&gt;レジャスポ氏に「時代はジャバだ」と力説してしまった &lt;a href="https://twitter.com/search?q=%23functionalLT&amp;amp;src=hash"&gt;#functionalLT&lt;/a&gt;&lt;/p&gt;&amp;mdash; matsumoto (@daimatz) &lt;a href="https://twitter.com/daimatz/statuses/465398393276088321"&gt;May 11, 2014&lt;/a&gt;&lt;/blockquote&gt;&lt;script async src="//platform.twitter.com/widgets.js" charset="utf-8"&gt;&lt;/script&gt;
+帰りで少し一緒になった &lt;a href="https://twitter.com/taiki45"&gt;@taiki45&lt;/a&gt; さんともそんな話をした。もうちょっと我々のアプローチがどの程度どうなのかという話とか、他のカイシャさんでそのへんどうしているのとかいう話を聞きたい気もした。&lt;/p&gt;
+
+&lt;p&gt;あとは、今回も Twitter でしか見たことのなかった何人かの人達の存在を確認した。&lt;/p&gt;
+
+&lt;p&gt;twitter/util と twitter/finagle 読もうと言いつつ、いやそこそこ読んではいるんだけどどうしても finagle のタスクスケジューリング周りがつかめていなくて、困っている。標準版の Future は FuturePool を直接触る設計になっていて直感的だが、 Twitter
+版の Future は finagle を普通に触っている限り FuturePool
+というかタスクスケジューラが一切表に出てこない。裏で謎スケジューリングしていたり、かといえば普通に &lt;code&gt;ExecutorService&lt;/code&gt;
+を作っているところもあったりで、結局どこが実態なのかわかっていない。一人
+finagle コードリーディングでも記録に残していくかなーと思っているところ。関連して twitter/util と netty もある程度読むことになりそう。&lt;/p&gt;
+</content>
+  </entry>
+  <entry>
+    <title>QPS コントロール</title>
+    <link rel="alternate" href="http://daimatz.net/text/2014/0327-qps.html"/>
+    <id>http://daimatz.net/text/2014/0327-qps.html</id>
+    <published>2014-03-26T15:00:00+00:00</published>
+    <updated>2014-03-26T15:00:00+00:00</updated>
+    <author>
+      <name>daimatz</name>
+    </author>
+    <content type="html">&lt;h2&gt;QPS&lt;/h2&gt;
+
+&lt;p&gt;QPS = Queries per Second, RPS = Requests per Second という言葉がある。読んで字の如し、秒間クエリ数を表す。例えば次のような HTTP アクセスログがあったとする。&lt;/p&gt;
+&lt;div class="highlight shell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;127.0.0.1 - frank &lt;span class="o"&gt;[&lt;/span&gt;10/Oct/2000:13:55:36 -0700] &lt;span class="s2"&gt;"GET /apache_pb.gif HTTP/1.0"&lt;/span&gt; 200 2326
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;このとき、ある一秒間を含むようなログの行数を数えれば QPS を出すことができる。&lt;/p&gt;
+&lt;div class="highlight shell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="gp"&gt;$ &lt;/span&gt;grep &lt;span class="s1"&gt;'10/Oct/2000:13:55:36 -0700'&lt;/span&gt; access_log | wc -l
+123
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;h2&gt;QPS コントロール&lt;/h2&gt;
+
+&lt;p&gt;リクエストを送る側が受ける側の性能の問題だったりで「500 QPS くらいで送って」と頼まれるときがある。そこでうまい具合に QPS をコントロールしたいのだが、そんなに自明な問題ではないことに気づいた。素朴には「メインスレッドが 500 個スレッドを作ってそれぞれがリクエストを飛ばし、メインスレッドは1秒寝る」みたいなことをやればいいと考えるかもしれない。&lt;/p&gt;
+&lt;div class="highlight java"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Main&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="o"&gt;[]&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="kd"&gt;throws&lt;/span&gt; &lt;span class="n"&gt;Exception&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="k"&gt;while&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="mi"&gt;500&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;++)).&lt;/span&gt;&lt;span class="na"&gt;run&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+            &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;sleep&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1000&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Task&lt;/span&gt; &lt;span class="kd"&gt;implements&lt;/span&gt; &lt;span class="n"&gt;Runnable&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kd"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;sendRequest&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;しかし、これではメインスレッドが &lt;code&gt;Thread&lt;/code&gt; や &lt;code&gt;Runnable&lt;/code&gt; のインスタンスを作る分遅れ、遅れたところから 1 秒間眠ることになる。これでは正しく QPS コントロールされているとはいえない。ちょっとしたテストならそれでも良いかもしれないが、規模が大きくなるにつれて無視できないことになる。&lt;/p&gt;
+
+&lt;p&gt;また、リクエストを送ったがネットワークの気まぐれで失敗した場合にリトライしたいこともある。リトライのロジックを同じスレッドの中で行うとすると次のようになる。&lt;/p&gt;
+&lt;div class="highlight java"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Main&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="o"&gt;[]&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="kd"&gt;throws&lt;/span&gt; &lt;span class="n"&gt;Exception&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="k"&gt;while&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kc"&gt;true&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="mi"&gt;500&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;++)).&lt;/span&gt;&lt;span class="na"&gt;run&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+            &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;sleep&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1000&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Task&lt;/span&gt; &lt;span class="kd"&gt;implements&lt;/span&gt; &lt;span class="n"&gt;Runnable&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kd"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;try&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;sendRequest&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt; &lt;span class="k"&gt;catch&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Exception&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;しかしこれではリクエストが失敗したらすぐに同じリクエストが飛ぶことになり、これも
+QPS が狂ってしまうことになる。&lt;/p&gt;
+
+&lt;h2&gt;問題&lt;/h2&gt;
+
+&lt;p&gt;改めてきちんと問題を定義する。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;毎秒与えられた数 n 回程度のリクエストを行う。
+
+&lt;ul&gt;
+&lt;li&gt;ここでは n は一台のマシンが無理なく送れる程度 (〜2000 程度) とする。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;失敗したときは m 回までリトライを行う。そのときも QPS は狂わないようにする。
+
+&lt;ul&gt;
+&lt;li&gt;m 回のリトライでも失敗したときはエラーを吐いて捨てる。&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;タイマーを使った固定頻度実行&lt;/h2&gt;
+
+&lt;p&gt;&lt;code&gt;java.util.Timer&lt;/code&gt; の &lt;code&gt;scheduleAtFixedRate&lt;/code&gt; というメソッドを使う。これを使って 1
+秒ごとに実行されるようにしておけば、毎秒きっちり 1 回の頻度で実行されるようになる (イレギュラーなスケジューリングは考えない) 。&lt;/p&gt;
+&lt;div class="highlight java"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.Timer&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.TimerTask&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+&lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Main&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="o"&gt;[]&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;Timer&lt;/span&gt; &lt;span class="n"&gt;timer&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Timer&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;Task&lt;/span&gt; &lt;span class="n"&gt;task&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;timer&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;scheduleAtFixedRate&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;task&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0L&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1000L&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Task&lt;/span&gt; &lt;span class="kd"&gt;extends&lt;/span&gt; &lt;span class="n"&gt;TimerTask&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;out&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;println&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"run!"&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;これで 1 秒に 1 回の割合でタスクが実行されることになる。実際にはこのタスクの中で
+n 回のリクエストを行いたいので、固定頻度で呼ばれる Runner と実際にリクエストを行う Task を分け、次のようになる。&lt;/p&gt;
+&lt;div class="highlight java"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.Timer&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.TimerTask&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+&lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Main&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;final&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;500&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+    &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="o"&gt;[]&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;Timer&lt;/span&gt; &lt;span class="n"&gt;timer&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Timer&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;Runner&lt;/span&gt; &lt;span class="n"&gt;runner&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Runner&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;timer&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;scheduleAtFixedRate&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;runner&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0L&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1000L&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Runner&lt;/span&gt; &lt;span class="kd"&gt;extends&lt;/span&gt; &lt;span class="n"&gt;TimerTask&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;++)).&lt;/span&gt;&lt;span class="na"&gt;run&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Task&lt;/span&gt; &lt;span class="kd"&gt;implements&lt;/span&gt; &lt;span class="n"&gt;Runnable&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kd"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="n"&gt;sendRequest&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;h2&gt;リトライ&lt;/h2&gt;
+
+&lt;p&gt;失敗した時のリトライを同じスレッドで行おうとするとどうしても QPS が狂ってしまうことは明らかである。そこでタスクキューにタスクを追加していき、次の実行の際にまとめて実行するという手段が考えられる。タスクのインスタンスはリクエストを送る際の引数とリトライ回数を保持している。&lt;/p&gt;
+&lt;div class="highlight java"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.LinkedList&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.Timer&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.TimerTask&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.Queue&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+&lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Main&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;final&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;500&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;final&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="n"&gt;Queue&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;tasks&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;LinkedList&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;();&lt;/span&gt;
+
+    &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="o"&gt;[]&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;Timer&lt;/span&gt; &lt;span class="n"&gt;timer&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Timer&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;Runner&lt;/span&gt; &lt;span class="n"&gt;runner&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Runner&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;timer&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;scheduleAtFixedRate&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;runner&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0L&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1000L&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Runner&lt;/span&gt; &lt;span class="kd"&gt;extends&lt;/span&gt; &lt;span class="n"&gt;TimerTask&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;while&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;size&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;offer&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;++,&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt;&lt;span class="o"&gt;)));&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+            &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;Thread&lt;/span&gt; &lt;span class="n"&gt;task&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;poll&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+                &lt;span class="n"&gt;task&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;run&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Task&lt;/span&gt; &lt;span class="kd"&gt;implements&lt;/span&gt; &lt;span class="n"&gt;Runnable&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kd"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="kd"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+            &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;nRetry&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;try&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;sendRequest&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt; &lt;span class="k"&gt;catch&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Exception&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;nRetry&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                    &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;--;&lt;/span&gt;
+                    &lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;offer&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;));&lt;/span&gt;
+                &lt;span class="o"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;out&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;println&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"arg = "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;" tried "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;" times, but failed."&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+                &lt;span class="o"&gt;}&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;しかしこの実装では、メインスレッドの他にタスクに失敗したスレッドからもアクセスされるため、それが同時に発生するとまずい。そこで同期化されたタスクキューを使う。&lt;/p&gt;
+&lt;div class="highlight java"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.concurrent.LinkedBlockingQueue&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.Timer&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.TimerTask&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.Queue&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+&lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Main&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;final&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;500&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;final&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="n"&gt;Queue&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;tasks&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;LinkedBlockingQueue&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;();&lt;/span&gt;
+
+    &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="o"&gt;[]&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;Timer&lt;/span&gt; &lt;span class="n"&gt;timer&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Timer&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;Runner&lt;/span&gt; &lt;span class="n"&gt;runner&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Runner&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;timer&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;scheduleAtFixedRate&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;runner&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0L&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1000L&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Runner&lt;/span&gt; &lt;span class="kd"&gt;extends&lt;/span&gt; &lt;span class="n"&gt;TimerTask&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;while&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;size&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;offer&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;++,&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt;&lt;span class="o"&gt;)));&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+            &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;Thread&lt;/span&gt; &lt;span class="n"&gt;thread&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;poll&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+                &lt;span class="n"&gt;thread&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;run&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Task&lt;/span&gt; &lt;span class="kd"&gt;implements&lt;/span&gt; &lt;span class="n"&gt;Runnable&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kd"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="kd"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+            &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;nRetry&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;try&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;sendRequest&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt; &lt;span class="k"&gt;catch&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Exception&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;nRetry&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                    &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;--;&lt;/span&gt;
+                    &lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;offer&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;));&lt;/span&gt;
+                &lt;span class="o"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;out&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;println&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"arg = "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;" tried "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;" times, but failed."&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+                &lt;span class="o"&gt;}&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;h2&gt;スレッドプールを使う&lt;/h2&gt;
+
+&lt;p&gt;以上で QPS コントロールの要件は満たされたはずだが、さらに改善の余地がある。何度もスレッドを作っている点だ。これまでの実装ではスレッドが使い捨てになっており、毎回新しくスレッドを作るという点でパフォーマンス的に問題がある。そこで数の固定されたスレッドプールを使う。&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;java.util.concurrent.ExecutorService&lt;/code&gt; はスレッドプールを扱う API である。この
+&lt;code&gt;invokeAll&lt;/code&gt; メソッドを使えば、引数の &lt;code&gt;Iterable&lt;/code&gt; に入ったタスクを一気に発火することができる。その後タスクキューをクリアすればよい。&lt;/p&gt;
+&lt;div class="highlight java"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.concurrent.Callable&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.concurrent.Executors&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.concurrent.ExecutorService&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.concurrent.LinkedBlockingQueue&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.Timer&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.TimerTask&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.Queue&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+&lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Main&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;final&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;500&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;final&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="n"&gt;LinkedBlockingQueue&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;tasks&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;LinkedBlockingQueue&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;();&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="n"&gt;ExecutorService&lt;/span&gt; &lt;span class="n"&gt;exe&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Executors&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;newFixedThreadPool&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+
+    &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="o"&gt;[]&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;Timer&lt;/span&gt; &lt;span class="n"&gt;timer&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Timer&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;Runner&lt;/span&gt; &lt;span class="n"&gt;runner&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Runner&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;timer&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;scheduleAtFixedRate&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;runner&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0L&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1000L&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Runner&lt;/span&gt; &lt;span class="kd"&gt;extends&lt;/span&gt; &lt;span class="n"&gt;TimerTask&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;while&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;size&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;offer&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;++,&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt;&lt;span class="o"&gt;));&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+            &lt;span class="k"&gt;try&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;exe&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;invokeAll&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+                &lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;clear&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt; &lt;span class="k"&gt;catch&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Exception&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;printStackTrace&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Task&lt;/span&gt; &lt;span class="kd"&gt;implements&lt;/span&gt; &lt;span class="n"&gt;Callable&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Void&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kd"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="kd"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+            &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;nRetry&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="n"&gt;Void&lt;/span&gt; &lt;span class="n"&gt;call&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;try&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;sendRequest&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt; &lt;span class="k"&gt;catch&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Exception&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;nRetry&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                    &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;--;&lt;/span&gt;
+                    &lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;offer&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+                &lt;span class="o"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;out&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;println&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"arg = "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;" tried "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;" times, but failed."&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+                &lt;span class="o"&gt;}&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+            &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="kc"&gt;null&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;しかしこれでも、失敗時のタスクキュー追加のタイミングによって次の問題がある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;invokeAll&lt;/code&gt; の直前に追加された場合、追加されたぶんも含めて &lt;code&gt;invoke&lt;/code&gt; されてしま
+う&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;invokeAll&lt;/code&gt; の直後に追加された場合、そのタスクが消えてしまう&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;解決策として次の2通りがある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;発火前後を &lt;code&gt;synchronized&lt;/code&gt; で同期化する&lt;/li&gt;
+&lt;li&gt;発火前に本当に発火すべきタスクを正しく集める&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;ここでは後者を採用する。&lt;/p&gt;
+&lt;div class="highlight java"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.concurrent.Callable&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.concurrent.Executors&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.concurrent.ExecutorService&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.concurrent.LinkedBlockingQueue&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.ArrayList&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.Timer&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.TimerTask&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;java.util.Random&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+&lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Main&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;final&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;500&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;final&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;3&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="n"&gt;LinkedBlockingQueue&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;tasks&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;LinkedBlockingQueue&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;();&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="n"&gt;ExecutorService&lt;/span&gt; &lt;span class="n"&gt;exe&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Executors&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;newFixedThreadPool&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+
+    &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;String&lt;/span&gt;&lt;span class="o"&gt;[]&lt;/span&gt; &lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="n"&gt;Timer&lt;/span&gt; &lt;span class="n"&gt;timer&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Timer&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;Runner&lt;/span&gt; &lt;span class="n"&gt;runner&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Runner&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+        &lt;span class="n"&gt;timer&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;scheduleAtFixedRate&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;runner&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;0L&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1000L&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Runner&lt;/span&gt; &lt;span class="kd"&gt;extends&lt;/span&gt; &lt;span class="n"&gt;TimerTask&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;while&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;size&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;offer&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;++,&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt;&lt;span class="o"&gt;));&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+            &lt;span class="n"&gt;ArrayList&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;toInvoke&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;ArrayList&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;();&lt;/span&gt;
+            &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt; &lt;span class="n"&gt;n&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;toInvoke&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;add&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;poll&lt;/span&gt;&lt;span class="o"&gt;());&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+            &lt;span class="k"&gt;try&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;exe&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;invokeAll&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;toInvoke&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt; &lt;span class="k"&gt;catch&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Exception&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;printStackTrace&lt;/span&gt;&lt;span class="o"&gt;();&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+
+    &lt;span class="kd"&gt;static&lt;/span&gt; &lt;span class="kd"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;Task&lt;/span&gt; &lt;span class="kd"&gt;implements&lt;/span&gt; &lt;span class="n"&gt;Callable&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Void&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+        &lt;span class="kd"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="kd"&gt;private&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="n"&gt;Task&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+            &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;nRetry&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+        &lt;span class="kd"&gt;public&lt;/span&gt; &lt;span class="n"&gt;Void&lt;/span&gt; &lt;span class="n"&gt;call&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+            &lt;span class="k"&gt;try&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="n"&gt;sendRequest&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;arg&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt; &lt;span class="k"&gt;catch&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Exception&lt;/span&gt; &lt;span class="n"&gt;e&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;nRetry&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                    &lt;span class="n"&gt;nRetry&lt;/span&gt;&lt;span class="o"&gt;--;&lt;/span&gt;
+                    &lt;span class="n"&gt;tasks&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;offer&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+                &lt;span class="o"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+                    &lt;span class="n"&gt;System&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;out&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;println&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"arg = "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;arg&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;" tried "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;" times, but failed."&lt;/span&gt;&lt;span class="o"&gt;);&lt;/span&gt;
+                &lt;span class="o"&gt;}&lt;/span&gt;
+            &lt;span class="o"&gt;}&lt;/span&gt;
+            &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="kc"&gt;null&lt;/span&gt;&lt;span class="o"&gt;;&lt;/span&gt;
+        &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;h2&gt;まとめと課題&lt;/h2&gt;
+
+&lt;p&gt;失敗したときに何度かやり直すことを許すようなリクエストを送るときの QPS コントロールについて、問題を考察した。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;単純にスレッドを作り実行するだけではいけない&lt;/li&gt;
+&lt;li&gt;失敗時に同じスレッドで実行すると QPS が狂う&lt;/li&gt;
+&lt;li&gt;スレッド使い捨て問題&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;これらについてそれぞれ解決策を示し、最終的にこの問題における設計パターンとコーディング例を示した。動作確認に使った動く完全なコード例を Gist にあげておく。&lt;/p&gt;
+
+&lt;script src="https://gist.github.com/daimatz/9811737.js"&gt;&lt;/script&gt;
+
+&lt;p&gt;この実装の問題として、多くの場合毎秒処理されるタスクは1秒間のうち最初のほうに固まってしまい、いびつな間隔で実行されてしまうということがある。できれば 1 秒間のうちでうまく分散して実行されるようにしたい。&lt;/p&gt;
+</content>
+  </entry>
+  <entry>
+    <title>FF6 をやった</title>
+    <link rel="alternate" href="http://daimatz.net/text/2014/0212-ff6.html"/>
+    <id>http://daimatz.net/text/2014/0212-ff6.html</id>
+    <published>2014-02-11T15:00:00+00:00</published>
+    <updated>2014-02-11T15:00:00+00:00</updated>
+    <author>
+      <name>daimatz</name>
+    </author>
+    <content type="html">&lt;p&gt;&lt;img src="/text/2014/0212-ff6/top.jpg" /&gt;&lt;/p&gt;
+
+&lt;p&gt;FF6 が Android で出ているのでやった。&lt;/p&gt;
+
+&lt;p&gt;普段ゲームをやらない僕としては RPG に手を出すのは珍しい。というかもう RPG を一本やる元気と気力と時間がなく途中でやめる気がしていたのだけどなんとかエンディングまでは見ることができた。学生時代にも FF8 と FF10 を途中までやって飽きて放置しているのである。これらはたぶん二度とやることはない。&lt;/p&gt;
+
+&lt;p&gt;僕にとっての Final Fantasy とは FF7 で、小学生の頃兄がどこかから借りてきてやっていたのを後ろから見ていた記憶がある。その後自分でもやるようになり、ハマった。次にやったのは FF9 だった。まともにやった FF はこの2作だ。どちらかというとシステムは
+7 のほうが好きで、ストーリーは 9 のほうが好きだった。「自分、自分て言いながら、自分のねえ奴だな……」というセリフは強烈に記憶に残っている。&lt;/p&gt;
+
+&lt;p&gt;で、 FF6 である。最初はシステムがわからないがやっているうちにのめり込んで来るというのは RPG というジャンルの特徴のように思う。魔石システムは FF7 のマテリアに慣れていたためかすんなり理解した。ただ最後までいっても結局主人公が誰なのかわからないし、なぜ仲間になったのかわからないキャラも多かった。これ自分が見ていないストーリーがたくさんあるからだろうか。それにしても仲間が最終的に 14 人て多すぎでは。&lt;/p&gt;
+
+&lt;p&gt;操作は最後まで慣れなかった。 Android 版では当然カーソルキーなどないので、タッチした点から動かした方向がカーソルキーに相当する操作になる。しかし最後まで思わぬ方向に行くという事態はなくならなかった。絶対的な位置にないは難しい。しかし普段 Mac
+のトラックパッドを使っていて不便に感じたことはないし、不思議なものだ。と書いてゲーム内ではカーソル操作の方向が8種類に限定されていたことによるのだろう、と気づいた。 Mac やノート PC のトラックパッドは実質無段階で方向調節でき微妙な調節ができるため不便には感じないのだろう。&lt;/p&gt;
+
+&lt;p&gt;いずれにしろここ数日は FF6 を飽きる前にやってしまわねば、という妙な脅迫感と戦っていた。エンディングまでは見たので自分の中ではとりあえず満足である。&lt;/p&gt;
+</content>
+  </entry>
+  <entry>
+    <title>Cake Pattern を理解する</title>
+    <link rel="alternate" href="http://daimatz.net/text/2014/0128-cake-pattern.html"/>
+    <id>http://daimatz.net/text/2014/0128-cake-pattern.html</id>
+    <published>2014-01-27T15:00:00+00:00</published>
+    <updated>2014-01-27T15:00:00+00:00</updated>
+    <author>
+      <name>daimatz</name>
+    </author>
+    <content type="html">&lt;h2&gt;オブジェクト指向とテストについて&lt;/h2&gt;
+
+&lt;p&gt;私はオブジェクト指向や特に自動テスト周りの実務経験に乏しいわけですが、最近になってようやくテストをきちんと書いたりテストファーストによって良い設計になるみたいな実感を得たりしています。長らくテストを書かない文化にいたので、注意しないとすぐにモノリシックな設計になってしまい、後から「テスト書くのどうすんだこれ」みたいになってしまうことも多い。&lt;/p&gt;
+
+&lt;p&gt;で、最近 Dependency Injection という依存性をうまいこと抽象化しておく仕組みについて学んだので、その Scala における代表的なデザインパターンである Cake Pattern で実装した話です。&lt;/p&gt;
+
+&lt;h2&gt;Dependency Injection&lt;/h2&gt;
+
+&lt;p&gt;依存性の注入とか訳される、依存しているオブジェクトを直接クラスの中に持っておくのではなくコンストラクタとかで受け取れるようにして依存性を分離しておく仕組みです。例えば Twitter のボットアプリケーションを想定した次のようなコード&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;object&lt;/span&gt; &lt;span class="nc"&gt;TwitterService&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;tweet&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;text&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;inReplyTo&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Option&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;Int&lt;/span&gt;&lt;span class="o"&gt;])&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="o"&gt;...&lt;/span&gt; &lt;span class="o"&gt;}&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;getTimeline&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Seq&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;Status&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="o"&gt;...&lt;/span&gt; &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="k"&gt;object&lt;/span&gt; &lt;span class="nc"&gt;TwitterBot&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;eventLoop&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="o"&gt;...&lt;/span&gt; &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;において、 &lt;code&gt;TwitterBot&lt;/code&gt; オブジェクトは &lt;code&gt;TwitterService&lt;/code&gt; オブジェクトに依存しています。ここで&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;TwitterService.tweet(text, inReplyTo)&lt;/code&gt; はツイートした結果発言 ID を返す&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;TwitterService.getTimeline(count)&lt;/code&gt; はタイムラインの最新 &lt;code&gt;count&lt;/code&gt; 件を取得する&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;ものとします。例が適当なため登場していないが実際他にもいろんなオブジェクトに依存していることでしょう。&lt;/p&gt;
+
+&lt;p&gt;ここで &lt;code&gt;TwitterService&lt;/code&gt; はシングルトンとして定義されており、例えば次のように
+&lt;code&gt;TwitterBot&lt;/code&gt; で利用されています。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;object&lt;/span&gt; &lt;span class="nc"&gt;TwitterBot&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;eventLoop&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;statusIds&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;action&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+    &lt;span class="o"&gt;...&lt;/span&gt;
+    &lt;span class="nc"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;sleep&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;60&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="mi"&gt;1000&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+  &lt;span class="o"&gt;}&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;action&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Seq&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;Int&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;tl&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="nc"&gt;TwitterService&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;getTimeline&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+    &lt;span class="n"&gt;tl&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;map&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="n"&gt;status&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Status&lt;/span&gt; &lt;span class="o"&gt;=&amp;gt;&lt;/span&gt;
+      &lt;span class="nc"&gt;TwitterService&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;tweet&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"@"&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;status&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;userId&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;" おやすみ〜"&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="nc"&gt;Some&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;status&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;id&lt;/span&gt;&lt;span class="o"&gt;))&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+  &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;さてこの実装には問題があります。この場合、 &lt;code&gt;TwitterService&lt;/code&gt; が直接
+&lt;code&gt;TwitterBot&lt;/code&gt; に出てきているため、これをモックして一時的に振る舞いを変えるということができないのです。すると &lt;code&gt;TwitterBot&lt;/code&gt; を単体テストしようとしても必然的に
+&lt;code&gt;TwitterService&lt;/code&gt; の動作を前提としてしまうため単体テストできません。単体テストができないとすべてを結合して粒度の大きなテストしかできなくなるため、問題が起きたときに問題の切り分けが難しくなります。この例はまだ単純だからよいのですが、他にもいろんなオブジェクトに依存しているとすると依存オブジェクト一つ一つを調べなければならないため、問題箇所の特定が難しくなるのです。&lt;/p&gt;
+
+&lt;p&gt;ではどうするのかというと、依存性を抽象的に宣言しておいてそのインターフェイスに対してメッセージを呼ぶということをやります。具体的には次のようにします。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;trait&lt;/span&gt; &lt;span class="nc"&gt;TwitterService&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;tweet&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;text&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;inReplyTo&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Option&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;Int&lt;/span&gt;&lt;span class="o"&gt;])&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;getTimeline&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Seq&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;Status&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;TwitterBot&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;twitterService&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;TwitterService&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;eventLoop&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;statusIds&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;action&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+    &lt;span class="o"&gt;...&lt;/span&gt;
+    &lt;span class="nc"&gt;Thread&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;sleep&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;60&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="mi"&gt;1000&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+  &lt;span class="o"&gt;}&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;action&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Int&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Seq&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;Int&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;tl&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;twitterService&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;getTimeline&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;count&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+    &lt;span class="n"&gt;tl&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;map&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="n"&gt;status&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Status&lt;/span&gt; &lt;span class="o"&gt;=&amp;gt;&lt;/span&gt;
+      &lt;span class="n"&gt;twitterService&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;tweet&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"@"&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;status&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;userId&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;" おやすみ〜"&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="nc"&gt;Some&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;status&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;id&lt;/span&gt;&lt;span class="o"&gt;))&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+  &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;&lt;code&gt;TwitterService&lt;/code&gt; がトレイトになり、 &lt;code&gt;TwitterBot&lt;/code&gt; がクラスになってコンストラクタに &lt;code&gt;TwitterService&lt;/code&gt; のインスタンスを取るようになりました。注目すべきは、コンストラクタに渡している &lt;code&gt;twitterService&lt;/code&gt; は &lt;code&gt;TwitterService&lt;/code&gt; トレイトのオブジェクトであると言っているだけで、その具体的な実装クラスは指定されていないことです。&lt;/p&gt;
+
+&lt;p&gt;こうすると、 &lt;code&gt;TwitterBot&lt;/code&gt; クラスの単体テストにはモックした &lt;code&gt;TwitterService&lt;/code&gt; のインスタンスを渡せば良くなり、依存しているオブジェクトの振る舞いを一時的に変えるということができるようになります。&lt;/p&gt;
+
+&lt;p&gt;これを使った &lt;code&gt;TwitterBot&lt;/code&gt; クラスの単体テストは次のように書けます。
+&lt;a href="https://code.google.com/p/mockito/"&gt;Mockito&lt;/a&gt; と &lt;a href="http://etorreborre.github.io/specs2/"&gt;specs2&lt;/a&gt; を使った例。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;org.mockito._&lt;/span&gt;
+&lt;span class="k"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;org.specs2.mutable._&lt;/span&gt;
+
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;TwitterBotSpec&lt;/span&gt; &lt;span class="k"&gt;extends&lt;/span&gt; &lt;span class="nc"&gt;Specification&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;twitterService&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="nc"&gt;Mockito&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;mock&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;classOf&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;TwitterService&lt;/span&gt;&lt;span class="o"&gt;])&lt;/span&gt;
+  &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;twitterBot&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nc"&gt;TwitterBot&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;twitterService&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+  &lt;span class="s"&gt;"action"&lt;/span&gt; &lt;span class="n"&gt;should&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="s"&gt;"return status ids"&lt;/span&gt; &lt;span class="n"&gt;in&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+      &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;status1&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="nc"&gt;Status&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;id&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;userId&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="s"&gt;"foo"&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;text&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="s"&gt;"Hello"&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+      &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;status2&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="nc"&gt;Status&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;id&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;userId&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="s"&gt;"bar"&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;text&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="s"&gt;"Scala"&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+      &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;statuses&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="nc"&gt;Seq&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;status1&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;status2&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+      &lt;span class="nc"&gt;Mockito&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;when&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;twitterService&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;getTimeline&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="o"&gt;)).&lt;/span&gt;&lt;span class="n"&gt;thenReturn&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;statuses&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+      &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;id1&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;100&lt;/span&gt;
+      &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;id2&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;102&lt;/span&gt;
+      &lt;span class="nc"&gt;Mockito&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;when&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;twitterService&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;tweet&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"@foo おやすみ〜"&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="nc"&gt;Some&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;))).&lt;/span&gt;&lt;span class="n"&gt;thenReturn&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;id1&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+      &lt;span class="nc"&gt;Mockito&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;when&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;twitterService&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;tweet&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"@bar おやすみ〜"&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="nc"&gt;Some&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="o"&gt;))).&lt;/span&gt;&lt;span class="n"&gt;thenReturn&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;id2&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+      &lt;span class="n"&gt;twitterBot&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;action&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;2&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="n"&gt;must_==&lt;/span&gt; &lt;span class="nc"&gt;Seq&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;id1&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;id2&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+  &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;この例では &lt;code&gt;new TwitterBot(twitterService)&lt;/code&gt; としてモックしたオブジェクトを注入しており、さらにテストケース内では &lt;code&gt;Mockito&lt;/code&gt; の機能を使って &lt;code&gt;twitterService&lt;/code&gt; オブジェクトの振る舞いをモックしています。 &lt;code&gt;TwitterBot.action&lt;/code&gt; メソッドのテストが、依存しているオブジェクトをうまくモックした状態で実行できているのがわかります。&lt;/p&gt;
+
+&lt;p&gt;このように、あるクラスが依存している別のオブジェクトを、そのクラス内で直接インスタンス化せず、後から注入 (inject) できるような設計にしておきます。テストの際には依存しているオブジェクトのところに挙動を適宜モック・スタブしたオブジェクトを渡せば、依存オブジェクトの振る舞いを一時的に固定することができ、テストしやすくなる。これを Dependency Injection といいます。&lt;/p&gt;
+
+&lt;h2&gt;自分型アノテーション&lt;/h2&gt;
+
+&lt;p&gt;Cake Pattern では Scala の自分型アノテーション (self-type annotation) という機能を使います。これはクラスを定義するときに自分の型をそのクラス以外にもできるというものです。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;trait&lt;/span&gt; &lt;span class="nc"&gt;A&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="k"&gt;trait&lt;/span&gt; &lt;span class="nc"&gt;B&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt; &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;C&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="c1"&gt;// 自分の型は A と B をミクスインしたものである
+&lt;/span&gt;  &lt;span class="n"&gt;self&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;A&lt;/span&gt; &lt;span class="kt"&gt;with&lt;/span&gt; &lt;span class="kt"&gt;B&lt;/span&gt; &lt;span class="o"&gt;=&amp;gt;&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="o"&gt;()&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;print&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;のようにすると、 &lt;code&gt;C&lt;/code&gt; は外からはただの &lt;code&gt;C&lt;/code&gt; として見えますが、自分の中からはトレイト &lt;code&gt;A&lt;/code&gt; と &lt;code&gt;B&lt;/code&gt; をミクスインしているとみなせます。 &lt;code&gt;B.x&lt;/code&gt; の具体的な実装は書いていませんがコンパイルは通ります。ただし、 &lt;code&gt;C&lt;/code&gt; をインスタンス化するときに問題が起こります。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;scala&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;C&lt;/span&gt;
+&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;console&lt;/span&gt;&lt;span class="k"&gt;&amp;gt;:&lt;/span&gt;&lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;error:&lt;/span&gt; &lt;span class="kt"&gt;class&lt;/span&gt; &lt;span class="kt"&gt;C&lt;/span&gt; &lt;span class="kt"&gt;cannot&lt;/span&gt; &lt;span class="kt"&gt;be&lt;/span&gt; &lt;span class="kt"&gt;instantiated&lt;/span&gt; &lt;span class="kt"&gt;because&lt;/span&gt; &lt;span class="kt"&gt;it&lt;/span&gt; &lt;span class="kt"&gt;does&lt;/span&gt; &lt;span class="kt"&gt;not&lt;/span&gt; &lt;span class="kt"&gt;conform&lt;/span&gt; &lt;span class="kt"&gt;to&lt;/span&gt; &lt;span class="kt"&gt;its&lt;/span&gt; &lt;span class="kt"&gt;self-&lt;/span&gt;&lt;span class="k"&gt;type&lt;/span&gt; &lt;span class="kt"&gt;C&lt;/span&gt; &lt;span class="kt"&gt;with&lt;/span&gt; &lt;span class="kt"&gt;A&lt;/span&gt; &lt;span class="kt"&gt;with&lt;/span&gt; &lt;span class="kt"&gt;B&lt;/span&gt;
+&lt;span class="n"&gt;scala&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;C&lt;/span&gt; &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="n"&gt;A&lt;/span&gt; &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt;
+&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;console&lt;/span&gt;&lt;span class="k"&gt;&amp;gt;:&lt;/span&gt;&lt;span class="mi"&gt;10&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;error:&lt;/span&gt; &lt;span class="kt"&gt;object&lt;/span&gt; &lt;span class="kt"&gt;creation&lt;/span&gt; &lt;span class="kt"&gt;impossible&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;since&lt;/span&gt; &lt;span class="n"&gt;value&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt; &lt;span class="n"&gt;in&lt;/span&gt; &lt;span class="k"&gt;trait&lt;/span&gt; &lt;span class="nc"&gt;B&lt;/span&gt; &lt;span class="n"&gt;of&lt;/span&gt; &lt;span class="k"&gt;type&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt; &lt;span class="kt"&gt;is&lt;/span&gt; &lt;span class="kt"&gt;not&lt;/span&gt; &lt;span class="kt"&gt;defined&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;&lt;code&gt;B.x&lt;/code&gt; が定義されていないためインスタンスを作成できないと出ます。そこでミクスインのときに &lt;code&gt;B.x&lt;/code&gt; を定義してやります。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;scala&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="n"&gt;C&lt;/span&gt; &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="n"&gt;A&lt;/span&gt; &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="n"&gt;B&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt; &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;x&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;"Hello"&lt;/span&gt; &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="n"&gt;scala&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;c&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;f&lt;/span&gt;
+&lt;span class="nc"&gt;Hello&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;(&lt;code&gt;A&lt;/code&gt; と &lt;code&gt;B&lt;/code&gt; を両方不完全な実装にしておくと似たような構文
+&lt;code&gt;new C with A { def print() { ... } } with B { val x = ... }&lt;/code&gt; でインスタンス化することはできませんでした。これできるのか？)&lt;/p&gt;
+
+&lt;p&gt;これ何が嬉しいのという話なんですが、外からは &lt;code&gt;C&lt;/code&gt; として見えるが実は &lt;code&gt;A&lt;/code&gt; と &lt;code&gt;B&lt;/code&gt;
+に依存しているというのが表せるのです。「&lt;code&gt;C&lt;/code&gt; というクラスが &lt;code&gt;A&lt;/code&gt; と &lt;code&gt;B&lt;/code&gt; に依存していて、かつその依存している実装を後から指定できる」というわけです。 Dependency
+Injection の臭いがしてきました。&lt;/p&gt;
+
+&lt;h2&gt;Cake Pattern&lt;/h2&gt;
+
+&lt;p&gt;さて、ようやく Cake Pattern に入ります。以下は
+&lt;a href="http://eed3si9n.com/ja/real-world-scala-dependency-injection-di"&gt;実戦での Scala: Cake パターンを用いた Dependency Injection (DI)&lt;/a&gt;
+を参考にしたものです。&lt;/p&gt;
+
+&lt;p&gt;ユーザーを表すケースクラスとそれを扱うクラスを定義します。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;case&lt;/span&gt; &lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;User&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;email&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+
+&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;UserRepository&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;authenticate&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;User&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;User&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"authenticating: "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+    &lt;span class="n"&gt;user&lt;/span&gt;
+  &lt;span class="o"&gt;}&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;create&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;User&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"creating: "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;delete&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;User&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"deleting: "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;ここで &lt;code&gt;UserRepository&lt;/code&gt; クラスは単にユーザーを扱う関数を集めている名前空間の役割しかないため、 &lt;code&gt;object&lt;/code&gt; として定義したくなる。しかし後のために普通のクラスとして定義しています。&lt;/p&gt;
+
+&lt;p&gt;次にもう少しユーザーを扱うために抽象化されているはずである &lt;code&gt;UserService&lt;/code&gt; を定義します。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;object&lt;/span&gt; &lt;span class="nc"&gt;UserService&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;authenticate&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;email&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;User&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt;
+    &lt;span class="nc"&gt;UserRepository&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;authenticate&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="nc"&gt;User&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;email&lt;/span&gt;&lt;span class="o"&gt;))&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;create&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;email&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt;
+    &lt;span class="nc"&gt;UserRepository&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;create&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="nc"&gt;User&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;email&lt;/span&gt;&lt;span class="o"&gt;))&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;delete&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;User&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt;
+    &lt;span class="nc"&gt;UserRepository&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;delete&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;上で見たとおり、ここで &lt;code&gt;UserRepository&lt;/code&gt; に依存しているとテストしにくくなります。そこで &lt;code&gt;UserRepository&lt;/code&gt; を注入してほしいオブジェクトとしておくのでした。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;UserService&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;authenticate&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;email&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;User&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt;
+    &lt;span class="n"&gt;userRepository&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;authenticate&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="nc"&gt;User&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;email&lt;/span&gt;&lt;span class="o"&gt;))&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;create&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;email&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt;
+    &lt;span class="n"&gt;userRepository&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;create&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="nc"&gt;User&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;email&lt;/span&gt;&lt;span class="o"&gt;))&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;delete&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;User&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt;
+    &lt;span class="n"&gt;userRepository&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;delete&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;&lt;code&gt;userRepository&lt;/code&gt; はここでは定義されていませんが、これが注入してほしいオブジェクトであることを覚えておきます。さて、ここからまず &lt;code&gt;UserRepository&lt;/code&gt; を名前空間トレイトに包みます。ここで &lt;code&gt;userRepository&lt;/code&gt; は後から注入されるべきオブジェクトとして宣言だけしておきます。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;trait&lt;/span&gt; &lt;span class="nc"&gt;UserRepositoryComponent&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;userRepository&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;UserRepository&lt;/span&gt;
+  &lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;UserRepository&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;authenticate&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;User&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;User&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+      &lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"authenticating user: "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+      &lt;span class="n"&gt;user&lt;/span&gt;
+    &lt;span class="o"&gt;}&lt;/span&gt;
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;create&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;User&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"creating user: "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;delete&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;User&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;println&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="s"&gt;"deleting user: "&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+  &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;同じく &lt;code&gt;UserService&lt;/code&gt; を名前空間トレイト &lt;code&gt;UserServiceComponent&lt;/code&gt; に包みますが、そこで &lt;code&gt;UserRepositoryComponent&lt;/code&gt; に依存していることを自分型アノテーションで示します。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;trait&lt;/span&gt; &lt;span class="nc"&gt;UserServiceComponent&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="n"&gt;self&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;UserRepositoryComponent&lt;/span&gt; &lt;span class="o"&gt;=&amp;gt;&lt;/span&gt;
+  &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;userService&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;UserService&lt;/span&gt;
+  &lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;UserService&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;authenticate&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;username&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;password&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;User&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt;
+      &lt;span class="n"&gt;userRepository&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;authenticate&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;username&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;password&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;create&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;username&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;password&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt;
+      &lt;span class="n"&gt;userRepository&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;create&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nc"&gt;User&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;username&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;password&lt;/span&gt;&lt;span class="o"&gt;))&lt;/span&gt;
+    &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;delete&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;User&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;userRepository&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;delete&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;user&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;
+  &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;最後に、これらのトレイトを継承した環境トレイトを作ります。ここでは実際にアプリケーションに使うものを &lt;code&gt;RealWorld&lt;/code&gt; としました。そしてそのトレイト内で
+&lt;code&gt;UserRepositoryComponent&lt;/code&gt; と &lt;code&gt;UserServiceComponent&lt;/code&gt; をインスタンス化して保持しておきます。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;trait&lt;/span&gt; &lt;span class="nc"&gt;RealWorld&lt;/span&gt;
+  &lt;span class="k"&gt;extends&lt;/span&gt; &lt;span class="nc"&gt;UserRepositoryComponent&lt;/span&gt;
+  &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="nc"&gt;UserServiceComponent&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;userRepositoryComponent&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nc"&gt;UserRepositoryComponent&lt;/span&gt;
+  &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;userServiceComponent&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nc"&gt;UserServiceComponent&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;こうしておくと、 &lt;code&gt;Main&lt;/code&gt; オブジェクトで &lt;code&gt;RealWorld&lt;/code&gt; を継承するだけでアプリケーション用のコードを書くことができます。すべての依存性が &lt;code&gt;RealWorld&lt;/code&gt; トレイトに集まっているのがわかります。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;object&lt;/span&gt; &lt;span class="nc"&gt;Main&lt;/span&gt; &lt;span class="k"&gt;extends&lt;/span&gt; &lt;span class="nc"&gt;RealWorld&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;args&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;Array&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="o"&gt;])&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+    &lt;span class="o"&gt;...&lt;/span&gt;
+  &lt;span class="o"&gt;}&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;また、テスト時には次のようにすべての依存性をモックした &lt;code&gt;TestEnvironment&lt;/code&gt; を使うことができます。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;trait&lt;/span&gt; &lt;span class="nc"&gt;TestEnvironment&lt;/span&gt;
+  &lt;span class="k"&gt;extends&lt;/span&gt; &lt;span class="nc"&gt;UserRepositoryComponent&lt;/span&gt;
+  &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="nc"&gt;UserServiceComponent&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;userRepositoryComponent&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;mock&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;UserRepositoryComponent&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt;
+  &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;userServiceComponent&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="n"&gt;mock&lt;/span&gt;&lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;UserServiceComponent&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;そして、単体テストしたいクラスは実際にインスタンス化して試すとよいでしょう。&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;UserServiceSpec&lt;/span&gt; &lt;span class="k"&gt;extends&lt;/span&gt; &lt;span class="nc"&gt;Specification&lt;/span&gt; &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="nc"&gt;TestEnvironment&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;override&lt;/span&gt; &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;userService&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nc"&gt;UserService&lt;/span&gt;
+  &lt;span class="o"&gt;...&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;実際に動く完全なコードは一番下に GitHub へのリンクを置いておきました。これを見るとうまいこと依存性を分離して保管できており、しかもテスト時にもうまくモックできていることがわかります。&lt;/p&gt;
+
+&lt;h2&gt;考察&lt;/h2&gt;
+
+&lt;p&gt;自分型アノテーションを使うところ、べつに
+&lt;code&gt;UserServiceComponent extends UserRepositoryComponent&lt;/code&gt; と書いても問題なく動くのだけど、自分型アノテーションを使うのは環境トレイトを作るときに依存性を見やすくすることが目的だろうか。つまり&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;trait&lt;/span&gt; &lt;span class="nc"&gt;UserRepositoryComponent&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="o"&gt;...&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;trait&lt;/span&gt; &lt;span class="nc"&gt;UserServiceComponent&lt;/span&gt; &lt;span class="k"&gt;extends&lt;/span&gt; &lt;span class="nc"&gt;UserRepositoryComponent&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="o"&gt;...&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;trait&lt;/span&gt; &lt;span class="nc"&gt;RealWorld&lt;/span&gt; &lt;span class="k"&gt;extends&lt;/span&gt; &lt;span class="nc"&gt;UserServiceComponent&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;userRepositoryComponent&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="o"&gt;...&lt;/span&gt;
+  &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;userServiceComponent&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="o"&gt;...&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;と書いても問題なく動くのだが、それより&lt;/p&gt;
+&lt;div class="highlight scala"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="k"&gt;trait&lt;/span&gt; &lt;span class="nc"&gt;UserRepositoryComponent&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="o"&gt;...&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;trait&lt;/span&gt; &lt;span class="nc"&gt;UserServiceComponent&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="n"&gt;self&lt;/span&gt;&lt;span class="k"&gt;:&lt;/span&gt; &lt;span class="kt"&gt;UserRepositoryComponent&lt;/span&gt; &lt;span class="o"&gt;=&amp;gt;&lt;/span&gt;
+  &lt;span class="o"&gt;...&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+
+&lt;span class="k"&gt;trait&lt;/span&gt; &lt;span class="nc"&gt;RealWorld&lt;/span&gt;
+  &lt;span class="k"&gt;extends&lt;/span&gt; &lt;span class="nc"&gt;UserRepositoryComponent&lt;/span&gt;
+  &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="nc"&gt;UserServiceComponent&lt;/span&gt; &lt;span class="o"&gt;{&lt;/span&gt;
+  &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;userRepositoryComponent&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="o"&gt;...&lt;/span&gt;
+  &lt;span class="k"&gt;val&lt;/span&gt; &lt;span class="n"&gt;userServiceComponent&lt;/span&gt; &lt;span class="k"&gt;=&lt;/span&gt; &lt;span class="o"&gt;...&lt;/span&gt;
+&lt;span class="o"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;と書くほうが &lt;code&gt;RealWorld&lt;/code&gt; が &lt;code&gt;extends&lt;/code&gt; しているトレイトと注入している依存性が一対一に対応するぶん見やすい。&lt;/p&gt;
+
+&lt;p&gt;あと Haskell で似たようなことできないかなーと思って探してみたら予想通り型クラスを使った &lt;a href="http://www.cs.rutgers.edu/~ccshan/prepose/prepose.pdf"&gt;それっぽい論文&lt;/a&gt; を見つけたのでそのうち読む。&lt;/p&gt;
+
+&lt;h2&gt;まとめ&lt;/h2&gt;
+
+&lt;p&gt;今回書いたコードは GitHub にまとめておいた。 &lt;code&gt;TwitterBot&lt;/code&gt; の例も Cake Pattern で書いてみたよ！といっても同じことを繰り返しただけだけど…&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="https://github.com/daimatz/CakePattern"&gt;daimatz/CakePattern&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</content>
+  </entry>
+  <entry>
+    <title>サイト作った</title>
+    <link rel="alternate" href="http://daimatz.net/text/2014/0126-hakyll.html"/>
+    <id>http://daimatz.net/text/2014/0126-hakyll.html</id>
+    <published>2014-01-25T15:00:00+00:00</published>
+    <updated>2014-01-25T15:00:00+00:00</updated>
+    <author>
+      <name>daimatz</name>
+    </author>
+    <content type="html">&lt;h2&gt;作ってみた&lt;/h2&gt;
+
+&lt;p&gt;もう何番煎じかわからないレベルだけど &lt;a href="http://jaspervdj.be/hakyll/"&gt;Hakyll&lt;/a&gt;
+と &lt;a href="http://mew.org/~kazu/proj/mighttpd/"&gt;Mighttpd&lt;/a&gt; で作ってみた。&lt;/p&gt;
+
+&lt;p&gt;Hakyll は Ruby 製の &lt;a href="http://jekyllrb.com/"&gt;Jekyll&lt;/a&gt; の Haskell クローンで、これらは
+&lt;a href="https://www.google.co.jp/search?q=%E9%9D%99%E7%9A%84%E3%82%B5%E3%82%A4%E3%83%88%E3%82%B8%E3%82%A7%E3%83%8D%E3%83%AC%E3%83%BC%E3%82%BF&amp;amp;lr=lang_ja"&gt;静的サイトジェネレータ&lt;/a&gt;
+と呼ばれる類のソフトウェアである。
+Hakyll はバックグラウンドに &lt;a href="http://johnmacfarlane.net/pandoc/"&gt;Pandoc&lt;/a&gt;
+を使っており Pandoc のサポートする書式ならなんでも使える (たぶん) 。
+Ruby も好きなので Jekyll を使うのもアリだったが、遠い昔よくわからずに使ってみてなんだかよくわからんなあという印象が先行してしまったため今回は Hakyll にした。&lt;/p&gt;
+
+&lt;p&gt;また Mighttpd (マイティー) は Haskell 製の HTTP サーバで、
+&lt;a href="http://nginx.org/"&gt;nginx&lt;/a&gt; よりパフォーマンスが出るらしい。ソースコードは1500行程度で非常にシンプル。今回は使うだけで中身を全然触れていないのだけどそのうちこれも読む。&lt;/p&gt;
+
+&lt;p&gt;作成の際には &lt;a href="http://jaspervdj.be/hakyll/"&gt;Hakyll 公式ページ&lt;/a&gt; はもちろん、このネタの日本での第一人者と思われる
+&lt;a href="http://tanakh.jp/posts/2011-11-05-haskell-infra.html"&gt;@tanakhさんのページ&lt;/a&gt;
+も大いに参考にした。&lt;/p&gt;
+
+&lt;h2&gt;経緯など&lt;/h2&gt;
+
+&lt;p&gt;これまでに何度か自分のブログを作ったことはあった。最初は &lt;a href="http://d.hatena.ne.jp/"&gt;はてなダイアリー&lt;/a&gt; 、次は
+&lt;a href="http://pages.github.com/"&gt;GitHub Pages&lt;/a&gt; を使ったもので、最後に &lt;a href="http://hatenablog.com/"&gt;はてなブログ&lt;/a&gt; である。しかしそのどれもが半年〜1年ほどしか続かなかった。気分を変えるために異なるサービスをいくつか使ってみたが、結局長続きするものはなかった。&lt;/p&gt;
+
+&lt;p&gt;なぜ長続きしなかったのか。生活環境の変化により文章を書くのが厳しくなったとか、デザインがみんな同じで気に入らなかったとか、とか、そういう話はある。しかし重要なのは本気度が足りないことだと思った。エンジニアは常に学ばなければ死んでしまう生き物である。学ぶ際にはインプットだけではあまり意味がなく、アウトプットこそが重要であることはよく知られている。これから自分のドメインを使ってきちんとアウトプットしていくという決意も込めて新しく作ることにした。自分のお金でやるならきちんと書くだろう。たぶん。この記事はその第一歩である。&lt;/p&gt;
+
+&lt;p&gt;最近大学の後輩たちの間で日記コンテンツを作るのが流行しており、本サイトもその影響を受けたことは否めない。&lt;/p&gt;
+
+&lt;h2&gt;技術的な話&lt;/h2&gt;
+
+&lt;h3&gt;Hakyll&lt;/h3&gt;
+
+&lt;p&gt;ルーティングの書き方など最初は見よう見まねであったが、しばらくいじると感覚がつかめてくる。そこで少し複雑な設定も行ったのでそれについて書くことにする。例えば Hakyll では記事のメタデータを以下のようなフォーマットで記事の先頭に記述する。&lt;/p&gt;
+&lt;div class="highlight markdown"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="p"&gt;----&lt;/span&gt;
+title: タイトル
+description: 概要
+&lt;span class="gh"&gt;published: 2014-01-05
+----
+&lt;/span&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;ここで横着な私は &lt;code&gt;published&lt;/code&gt; を書くのが面倒くさいと思った。そこで見てみると、世の Hakyll を使っているサイトには URL が &lt;code&gt;YYYY-mm-dd&lt;/code&gt;
+の形式になっているものが多い。
+Hakyll のソースを見てみると確かに &lt;code&gt;Hakyll.Web.Template.Context.getItemUTC&lt;/code&gt; で
+&lt;code&gt;published&lt;/code&gt; や &lt;code&gt;date&lt;/code&gt; フィールドがない場合はファイル名から読むようになっている。これを使えばいい。しかし気に入らないのはその形式で、 &lt;code&gt;YYYY-mm-dd-*&lt;/code&gt; 固定となっているのだ。すべてのファイルを &lt;code&gt;YYYY-mm-dd-*&lt;/code&gt; のように配置するのか。これは嫌だ。例えば年ごとにディレクトリを変えたい、しかし &lt;code&gt;YYYY/YYYY-mm-dd-*&lt;/code&gt; は冗長だ。&lt;/p&gt;
+
+&lt;p&gt;そこでソースを読みつつ &lt;code&gt;YYYY/mmdd*&lt;/code&gt; の形式にできるようにした。まず &lt;code&gt;Hakyll.Web.Template.Context.field&lt;/code&gt; 関数の型は&lt;/p&gt;
+&lt;div class="highlight haskell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;field&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;Item&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kt"&gt;Compiler&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kt"&gt;Context&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;となっており、&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;第1引数にテンプレートからアクセスするためのキー名&lt;/li&gt;
+&lt;li&gt;第2引数にその記事から文字列への変換関数&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;を指定する。
+&lt;code&gt;toFilePath $ itemIdentifier item&lt;/code&gt; でファイルパスが取得できるので、&lt;/p&gt;
+&lt;div class="highlight haskell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;dateField&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kt"&gt;Context&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;
+&lt;span class="n"&gt;dateField&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;field&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt; &lt;span class="o"&gt;$&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kr"&gt;do&lt;/span&gt;
+    &lt;span class="kr"&gt;let&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;toFilePath&lt;/span&gt; &lt;span class="o"&gt;$&lt;/span&gt; &lt;span class="n"&gt;itemIdentifier&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;
+        &lt;span class="n"&gt;dirname&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;takeDirectory&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt;
+        &lt;span class="n"&gt;basename&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;takeBaseName&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt;
+        &lt;span class="n"&gt;dateString&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;takeFileName&lt;/span&gt; &lt;span class="n"&gt;dirname&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt; &lt;span class="n"&gt;take&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt; &lt;span class="n"&gt;basename&lt;/span&gt;
+    &lt;span class="o"&gt;...&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;とすれば、 &lt;code&gt;*/YYYY/mmdd*&lt;/code&gt; というファイルパスから
+&lt;code&gt;YYYYmmdd&lt;/code&gt; 形式の文字列が得られる。これをよしなにフォーマットして &lt;code&gt;return&lt;/code&gt; すればいい。一応フォーマット文字列も引数に取るようにして、最終的には次のようになった。&lt;/p&gt;
+&lt;div class="highlight haskell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;Data.Time.Format&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nf"&gt;formatTime&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nf"&gt;parseTime&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;System.FilePath&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nf"&gt;takeBaseName&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nf"&gt;takeDirectory&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nf"&gt;takeFileName&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;System.Locale&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nf"&gt;defaultTimeLocale&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="n"&gt;dateField&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kt"&gt;Context&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;
+&lt;span class="n"&gt;dateField&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt; &lt;span class="n"&gt;format&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;field&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt; &lt;span class="o"&gt;$&lt;/span&gt; &lt;span class="nf"&gt;\&lt;/span&gt;&lt;span class="n"&gt;item&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kr"&gt;do&lt;/span&gt;
+    &lt;span class="kr"&gt;let&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;toFilePath&lt;/span&gt; &lt;span class="o"&gt;$&lt;/span&gt; &lt;span class="n"&gt;itemIdentifier&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;
+        &lt;span class="n"&gt;dirname&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;takeDirectory&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt;
+        &lt;span class="n"&gt;basename&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;takeBaseName&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt;
+        &lt;span class="n"&gt;dateString&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;takeFileName&lt;/span&gt; &lt;span class="n"&gt;dirname&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt; &lt;span class="n"&gt;take&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt; &lt;span class="n"&gt;basename&lt;/span&gt;
+        &lt;span class="n"&gt;time&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="kt"&gt;UTCTime&lt;/span&gt;
+        &lt;span class="n"&gt;time&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;fromMaybe&lt;/span&gt;
+            &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="ne"&gt;error&lt;/span&gt; &lt;span class="o"&gt;$&lt;/span&gt; &lt;span class="s"&gt;"file `"&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt; &lt;span class="s"&gt;"` doesn't match to format `%Y/%m%d*`"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;parseTime&lt;/span&gt; &lt;span class="n"&gt;defaultTimeLocale&lt;/span&gt; &lt;span class="s"&gt;"%Y%m%d"&lt;/span&gt; &lt;span class="n"&gt;dateString&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="n"&gt;return&lt;/span&gt; &lt;span class="o"&gt;$&lt;/span&gt; &lt;span class="n"&gt;formatTime&lt;/span&gt; &lt;span class="n"&gt;defaultTimeLocale&lt;/span&gt; &lt;span class="n"&gt;format&lt;/span&gt; &lt;span class="n"&gt;time&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;これを使うには次のように &lt;code&gt;Context&lt;/code&gt; を指定すれば良い。&lt;/p&gt;
+&lt;div class="highlight haskell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;Data.Monoid&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nf"&gt;mconcat&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="n"&gt;ctx&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="kt"&gt;Context&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;
+&lt;span class="n"&gt;ctx&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;mconcat&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt; &lt;span class="n"&gt;dateField&lt;/span&gt; &lt;span class="s"&gt;"published"&lt;/span&gt; &lt;span class="s"&gt;"%Y-%m-%d"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;defaultContext&lt;/span&gt; &lt;span class="p"&gt;]&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;また、記事の一覧などのページで &lt;code&gt;Hakyll.Web.Template.List.recentFirst&lt;/code&gt;
+という関数を使いたかったのだがこれも &lt;code&gt;getItemUTC&lt;/code&gt; を使っているため動かない。そこで単純にその記事のファイルパスを降順にソートする関数を定義してそれを代わりに使うことにした。&lt;/p&gt;
+&lt;div class="highlight haskell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;Control.Arrow&lt;/span&gt; &lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="o"&gt;***&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;Control.Monad&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nf"&gt;join&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;Data.List&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nf"&gt;sortBy&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="n"&gt;recentFirst&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;MonadMetadata&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;Functor&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;Item&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;Item&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;span class="n"&gt;recentFirst&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;return&lt;/span&gt; &lt;span class="o"&gt;.&lt;/span&gt; &lt;span class="n"&gt;sortBy&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;flip&lt;/span&gt; &lt;span class="n"&gt;cmp&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+  &lt;span class="kr"&gt;where&lt;/span&gt;
+    &lt;span class="n"&gt;cmp&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="kt"&gt;Item&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kt"&gt;Item&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kt"&gt;Ordering&lt;/span&gt;
+    &lt;span class="n"&gt;cmp&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;curry&lt;/span&gt; &lt;span class="o"&gt;$&lt;/span&gt; &lt;span class="n"&gt;uncurry&lt;/span&gt; &lt;span class="n"&gt;compare&lt;/span&gt; &lt;span class="o"&gt;.&lt;/span&gt; &lt;span class="n"&gt;map'&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;toFilePath&lt;/span&gt; &lt;span class="o"&gt;.&lt;/span&gt; &lt;span class="n"&gt;itemIdentifier&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="n"&gt;map'&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="n"&gt;map'&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;join&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;***&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;本当は &lt;code&gt;description&lt;/code&gt; を書くのも面倒なので、自動でその記事のタイトルと最初のパラグラフあたりをとってくるようにできないかと思っている。これは後で試す。&lt;/p&gt;
+
+&lt;h3&gt;デザイン&lt;/h3&gt;
+
+&lt;p&gt;デザインは悩みの種だったが、適当に CSS テンプレートを探して気に入ったものを使うことにした。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="http://www.coolwebwindow.com/"&gt;http://www.coolwebwindow.com/&lt;/a&gt;
+
+&lt;ul&gt;
+&lt;li&gt;商用サイト向けCSSテンプレート No.16&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;商用サイト向けと書いてあるが個人でも問題ないようなのでありがたくいただいた。横幅や文字サイズなど少しだけカスタマイズし、またソースコードハイライト用の CSS も書いて使っている。&lt;/p&gt;
+
+&lt;p&gt;右上に表示しているアイコンはそれぞれ次の 32px のものを使った。
+Feed Icons は適当に編集してある。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href="http://feedicons.com/"&gt;Feed Icons&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://dev.twitter.com/docs/image-resources"&gt;Image Resources&lt;/a&gt; (Twitter 公式)&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/logos"&gt;GitHub Logos and Usage&lt;/a&gt; (GitHub 公式)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3&gt;サーバ&lt;/h3&gt;
+
+&lt;p&gt;個人用途の VPS では &lt;a href="http://vps.sakura.ad.jp/"&gt;さくらの VPS&lt;/a&gt; が一番安定なのだけど、どうせ静的ファイルを置くだけなので安さをとって
+&lt;a href="http://dream.jp/vps/"&gt;ServersMan@VPS&lt;/a&gt; にした。安いだけあってなかなか厳しいスペックだけどなんとかなるだろう。ちなみに Mighttpd で立てた HTTP サーバに ab でベンチとったら 700 QPS くらいだった。まあこんなにアクセスが来ることはたぶんない。&lt;/p&gt;
+
+&lt;p&gt;ディストリビューションは CentOS に嫌気がさしていたので Ubuntu で。ドメインはずっとお金を払いつつもほとんど使っていなかった daimatz.net を使う。&lt;/p&gt;
+
+&lt;p&gt;流行の言葉に &lt;a href="https://www.google.co.jp/search?q=infrastructure+as+code&amp;amp;lr=lang_ja"&gt;Infrastructure as
+Code&lt;/a&gt;
+というものがある。サーバ設定を完全にスクリプトに落としこんでしまい、手作業をなくすという考え方だ。これまでの経験から自分個人が運用しているサーバは頻繁にリプレースしたくなるものと思っていたが、これは「もっとよい構築方法があるはず」とか「設定を整理しておこう」という意識が働いているからだと思った。流行に乗ってサーバ設定を完全にコードに落としこんでしまうことにすれば新しいソフトウェアを使うときが来ても安心である。&lt;/p&gt;
+
+&lt;p&gt;サーバ設定ツールとして
+&lt;a href="http://www.getchef.com/chef/"&gt;Chef&lt;/a&gt;,
+&lt;a href="http://www.ansibleworks.com/"&gt;Ansible&lt;/a&gt;,
+&lt;a href="http://fabfile.org/"&gt;Fabric&lt;/a&gt; を試してきたが、
+Fabric が一番手に馴染んだのでそれを使っている。冪等性とか言われているけど実際完全に冪等性を担保するのは難しいと思っていて、いっそ冪等性を完全に捨てても使いやすいものを使う方針である。やっぱ冪等性ほしいわ〜となったときに
+&lt;a href="https://github.com/sebastien/cuisine"&gt;cuisine&lt;/a&gt; は使うかもしれない。&lt;/p&gt;
+
+&lt;h2&gt;まとめのような何か&lt;/h2&gt;
+
+&lt;p&gt;Hakyll というか Haskell の良いところで型を見れば大体の処理がわかるというのがあって、今回も大きな困難なく作ることができた。
+Scala を最近書いているが Scala にはあまりその文化がないように感じていて、どうしても実装を見なければいけないことが多いと思う。というか Scaladoc を見るよりコードを見るほうが早いことが多い。そのぶんコードを読む習慣がついたのはよかったのだけど、やはり Haskell の文化が恋しいなあと思うわけです。あと &lt;a href="http://www.mew.org/~kazu/proj/ghc-mod/"&gt;ghc-mod&lt;/a&gt;
+がとても使いやすい。 &lt;a href="https://github.com/eagletmt/ghcmod-vim"&gt;Vim から使える&lt;/a&gt;
+のもすばらしい。&lt;/p&gt;
+
+&lt;p&gt;環境作ったのできちんとアウトプットしていこうと思った。&lt;/p&gt;
+</content>
+  </entry>
+</feed>

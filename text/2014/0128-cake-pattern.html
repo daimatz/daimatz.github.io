@@ -1,0 +1,523 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<meta http-equiv="imagetoolbar" content="no" />
+<meta name="description" content="daimatz の個人サイト" />
+<meta name="keywords" content="daimatz" />
+<link href="/css/normalize.css" rel="stylesheet" type="text/css" /><link href="/css/common.css" rel="stylesheet" type="text/css" /><link href="/css/syntax.css" rel="stylesheet" type="text/css" />
+<script src="/js/jquery.js" type="text/javascript"></script><script src="/js/common.js" type="text/javascript"></script>
+<title>Cake Pattern を理解する - daimatz.net -</title>
+<link href="/img/favicon.ico" rel="icon" type="image/ico" />
+</head>
+<body>
+<div id="top">
+   <div id="header">
+      <h1><a href="/">daimatz.net</a></h1>
+      <div id="navi">
+         <ul>
+         <li><a href="/text/atom.xml"><img alt="rss" src="/img/rss.png" /></a></li>
+         <li><a href="https://twitter.com/daimatz"><img alt="twitter" src="/img/twitter.png" /></a></li>
+         <li><a href="https://github.com/daimatz"><img alt="twitter" src="/img/github.png" /></a></li>
+         </ul>
+      </div><!-- /#navi-->
+   </div><!-- /#header-->
+   <div id="menu">
+      <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/text/">Text</a></li>
+      <li><a href="/about.html">About</a></li>
+      </ul>
+   </div><!-- /#menu-->
+   <div id="contents">
+      <h1>Cake Pattern を理解する</h1>
+        <p class="info">
+    Posted on 2014-08-30
+    tags: <a href="/text/ruby.html">ruby</a>, <a href="/text/github.html">github</a>, <a href="/text/travis.html">travis</a>
+  </p>
+  <h2>オブジェクト指向とテストについて</h2>
+
+<p>私はオブジェクト指向や特に自動テスト周りの実務経験に乏しいわけですが、最近になってようやくテストをきちんと書いたりテストファーストによって良い設計になるみたいな実感を得たりしています。長らくテストを書かない文化にいたので、注意しないとすぐにモノリシックな設計になってしまい、後から「テスト書くのどうすんだこれ」みたいになってしまうことも多い。</p>
+
+<p>で、最近 Dependency Injection という依存性をうまいこと抽象化しておく仕組みについて学んだので、その Scala における代表的なデザインパターンである Cake Pattern で実装した話です。</p>
+
+<h2>Dependency Injection</h2>
+
+<p>依存性の注入とか訳される、依存しているオブジェクトを直接クラスの中に持っておくのではなくコンストラクタとかで受け取れるようにして依存性を分離しておく仕組みです。例えば Twitter のボットアプリケーションを想定した次のようなコード</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7</pre></td><td class="code"><pre><span class="k">object</span> <span class="nc">TwitterService</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="n">tweet</span><span class="o">(</span><span class="n">text</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">inReplyTo</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span><span class="k">:</span> <span class="kt">Int</span> <span class="o">=</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+  <span class="k">def</span> <span class="n">getTimeline</span><span class="o">(</span><span class="n">count</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">Seq</span><span class="o">[</span><span class="kt">Status</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+<span class="o">}</span>
+<span class="k">object</span> <span class="nc">TwitterBot</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="n">eventLoop</span><span class="o">()</span> <span class="o">{</span> <span class="o">...</span> <span class="o">}</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>において、 <code>TwitterBot</code> オブジェクトは <code>TwitterService</code> オブジェクトに依存しています。ここで</p>
+
+<ul>
+<li><code>TwitterService.tweet(text, inReplyTo)</code> はツイートした結果発言 ID を返す</li>
+<li><code>TwitterService.getTimeline(count)</code> はタイムラインの最新 <code>count</code> 件を取得する</li>
+</ul>
+
+<p>ものとします。例が適当なため登場していないが実際他にもいろんなオブジェクトに依存していることでしょう。</p>
+
+<p>ここで <code>TwitterService</code> はシングルトンとして定義されており、例えば次のように
+<code>TwitterBot</code> で利用されています。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13</pre></td><td class="code"><pre><span class="k">object</span> <span class="nc">TwitterBot</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="n">eventLoop</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="n">statusIds</span> <span class="k">=</span> <span class="n">action</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span>
+    <span class="o">...</span>
+    <span class="nc">Thread</span><span class="o">.</span><span class="n">sleep</span><span class="o">(</span><span class="mi">60</span> <span class="o">*</span> <span class="mi">1000</span><span class="o">)</span>
+  <span class="o">}</span>
+  <span class="k">def</span> <span class="n">action</span><span class="o">(</span><span class="n">count</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">Seq</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="n">tl</span> <span class="k">=</span> <span class="nc">TwitterService</span><span class="o">.</span><span class="n">getTimeline</span><span class="o">(</span><span class="n">count</span><span class="o">)</span>
+    <span class="n">tl</span><span class="o">.</span><span class="n">map</span> <span class="o">{</span> <span class="n">status</span><span class="k">:</span> <span class="kt">Status</span> <span class="o">=&gt;</span>
+      <span class="nc">TwitterService</span><span class="o">.</span><span class="n">tweet</span><span class="o">(</span><span class="s">"@"</span> <span class="o">+</span> <span class="n">status</span><span class="o">.</span><span class="n">userId</span> <span class="o">+</span> <span class="s">" おやすみ〜"</span><span class="o">,</span> <span class="nc">Some</span><span class="o">(</span><span class="n">status</span><span class="o">.</span><span class="n">id</span><span class="o">))</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>さてこの実装には問題があります。この場合、 <code>TwitterService</code> が直接
+<code>TwitterBot</code> に出てきているため、これをモックして一時的に振る舞いを変えるということができないのです。すると <code>TwitterBot</code> を単体テストしようとしても必然的に
+<code>TwitterService</code> の動作を前提としてしまうため単体テストできません。単体テストができないとすべてを結合して粒度の大きなテストしかできなくなるため、問題が起きたときに問題の切り分けが難しくなります。この例はまだ単純だからよいのですが、他にもいろんなオブジェクトに依存しているとすると依存オブジェクト一つ一つを調べなければならないため、問題箇所の特定が難しくなるのです。</p>
+
+<p>ではどうするのかというと、依存性を抽象的に宣言しておいてそのインターフェイスに対してメッセージを呼ぶということをやります。具体的には次のようにします。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18</pre></td><td class="code"><pre><span class="k">trait</span> <span class="nc">TwitterService</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="n">tweet</span><span class="o">(</span><span class="n">text</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">inReplyTo</span><span class="k">:</span> <span class="kt">Option</span><span class="o">[</span><span class="kt">Int</span><span class="o">])</span><span class="k">:</span> <span class="kt">Int</span>
+  <span class="k">def</span> <span class="n">getTimeline</span><span class="o">(</span><span class="n">count</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">Seq</span><span class="o">[</span><span class="kt">Status</span><span class="o">]</span>
+<span class="o">}</span>
+
+<span class="k">class</span> <span class="nc">TwitterBot</span><span class="o">(</span><span class="n">twitterService</span><span class="k">:</span> <span class="kt">TwitterService</span><span class="o">)</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="n">eventLoop</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="n">statusIds</span> <span class="k">=</span> <span class="n">action</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span>
+    <span class="o">...</span>
+    <span class="nc">Thread</span><span class="o">.</span><span class="n">sleep</span><span class="o">(</span><span class="mi">60</span> <span class="o">*</span> <span class="mi">1000</span><span class="o">)</span>
+  <span class="o">}</span>
+  <span class="k">def</span> <span class="n">action</span><span class="o">(</span><span class="n">count</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span><span class="k">:</span> <span class="kt">Seq</span><span class="o">[</span><span class="kt">Int</span><span class="o">]</span> <span class="k">=</span> <span class="o">{</span>
+    <span class="k">val</span> <span class="n">tl</span> <span class="k">=</span> <span class="n">twitterService</span><span class="o">.</span><span class="n">getTimeline</span><span class="o">(</span><span class="n">count</span><span class="o">)</span>
+    <span class="n">tl</span><span class="o">.</span><span class="n">map</span> <span class="o">{</span> <span class="n">status</span><span class="k">:</span> <span class="kt">Status</span> <span class="o">=&gt;</span>
+      <span class="n">twitterService</span><span class="o">.</span><span class="n">tweet</span><span class="o">(</span><span class="s">"@"</span> <span class="o">+</span> <span class="n">status</span><span class="o">.</span><span class="n">userId</span> <span class="o">+</span> <span class="s">" おやすみ〜"</span><span class="o">,</span> <span class="nc">Some</span><span class="o">(</span><span class="n">status</span><span class="o">.</span><span class="n">id</span><span class="o">))</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p><code>TwitterService</code> がトレイトになり、 <code>TwitterBot</code> がクラスになってコンストラクタに <code>TwitterService</code> のインスタンスを取るようになりました。注目すべきは、コンストラクタに渡している <code>twitterService</code> は <code>TwitterService</code> トレイトのオブジェクトであると言っているだけで、その具体的な実装クラスは指定されていないことです。</p>
+
+<p>こうすると、 <code>TwitterBot</code> クラスの単体テストにはモックした <code>TwitterService</code> のインスタンスを渡せば良くなり、依存しているオブジェクトの振る舞いを一時的に変えるということができるようになります。</p>
+
+<p>これを使った <code>TwitterBot</code> クラスの単体テストは次のように書けます。
+<a href="https://code.google.com/p/mockito/">Mockito</a> と <a href="http://etorreborre.github.io/specs2/">specs2</a> を使った例。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20</pre></td><td class="code"><pre><span class="k">import</span> <span class="nn">org.mockito._</span>
+<span class="k">import</span> <span class="nn">org.specs2.mutable._</span>
+
+<span class="k">class</span> <span class="nc">TwitterBotSpec</span> <span class="k">extends</span> <span class="nc">Specification</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="n">twitterService</span> <span class="k">=</span> <span class="nc">Mockito</span><span class="o">.</span><span class="n">mock</span><span class="o">(</span><span class="n">classOf</span><span class="o">[</span><span class="kt">TwitterService</span><span class="o">])</span>
+  <span class="k">val</span> <span class="n">twitterBot</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">TwitterBot</span><span class="o">(</span><span class="n">twitterService</span><span class="o">)</span>
+  <span class="s">"action"</span> <span class="n">should</span> <span class="o">{</span>
+    <span class="s">"return status ids"</span> <span class="n">in</span> <span class="o">{</span>
+      <span class="k">val</span> <span class="n">status1</span> <span class="k">=</span> <span class="nc">Status</span><span class="o">(</span><span class="n">id</span> <span class="k">=</span> <span class="mi">1</span><span class="o">,</span> <span class="n">userId</span> <span class="k">=</span> <span class="s">"foo"</span><span class="o">,</span> <span class="n">text</span> <span class="k">=</span> <span class="s">"Hello"</span><span class="o">)</span>
+      <span class="k">val</span> <span class="n">status2</span> <span class="k">=</span> <span class="nc">Status</span><span class="o">(</span><span class="n">id</span> <span class="k">=</span> <span class="mi">2</span><span class="o">,</span> <span class="n">userId</span> <span class="k">=</span> <span class="s">"bar"</span><span class="o">,</span> <span class="n">text</span> <span class="k">=</span> <span class="s">"Scala"</span><span class="o">)</span>
+      <span class="k">val</span> <span class="n">statuses</span> <span class="k">=</span> <span class="nc">Seq</span><span class="o">(</span><span class="n">status1</span><span class="o">,</span> <span class="n">status2</span><span class="o">)</span>
+      <span class="nc">Mockito</span><span class="o">.</span><span class="n">when</span><span class="o">(</span><span class="n">twitterService</span><span class="o">.</span><span class="n">getTimeline</span><span class="o">(</span><span class="mi">2</span><span class="o">)).</span><span class="n">thenReturn</span><span class="o">(</span><span class="n">statuses</span><span class="o">)</span>
+      <span class="k">val</span> <span class="n">id1</span> <span class="k">=</span> <span class="mi">100</span>
+      <span class="k">val</span> <span class="n">id2</span> <span class="k">=</span> <span class="mi">102</span>
+      <span class="nc">Mockito</span><span class="o">.</span><span class="n">when</span><span class="o">(</span><span class="n">twitterService</span><span class="o">.</span><span class="n">tweet</span><span class="o">(</span><span class="s">"@foo おやすみ〜"</span><span class="o">,</span> <span class="nc">Some</span><span class="o">(</span><span class="mi">1</span><span class="o">))).</span><span class="n">thenReturn</span><span class="o">(</span><span class="n">id1</span><span class="o">)</span>
+      <span class="nc">Mockito</span><span class="o">.</span><span class="n">when</span><span class="o">(</span><span class="n">twitterService</span><span class="o">.</span><span class="n">tweet</span><span class="o">(</span><span class="s">"@bar おやすみ〜"</span><span class="o">,</span> <span class="nc">Some</span><span class="o">(</span><span class="mi">2</span><span class="o">))).</span><span class="n">thenReturn</span><span class="o">(</span><span class="n">id2</span><span class="o">)</span>
+      <span class="n">twitterBot</span><span class="o">.</span><span class="n">action</span><span class="o">(</span><span class="mi">2</span><span class="o">)</span> <span class="n">must_==</span> <span class="nc">Seq</span><span class="o">(</span><span class="n">id1</span><span class="o">,</span> <span class="n">id2</span><span class="o">)</span>
+    <span class="o">}</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>この例では <code>new TwitterBot(twitterService)</code> としてモックしたオブジェクトを注入しており、さらにテストケース内では <code>Mockito</code> の機能を使って <code>twitterService</code> オブジェクトの振る舞いをモックしています。 <code>TwitterBot.action</code> メソッドのテストが、依存しているオブジェクトをうまくモックした状態で実行できているのがわかります。</p>
+
+<p>このように、あるクラスが依存している別のオブジェクトを、そのクラス内で直接インスタンス化せず、後から注入 (inject) できるような設計にしておきます。テストの際には依存しているオブジェクトのところに挙動を適宜モック・スタブしたオブジェクトを渡せば、依存オブジェクトの振る舞いを一時的に固定することができ、テストしやすくなる。これを Dependency Injection といいます。</p>
+
+<h2>自分型アノテーション</h2>
+
+<p>Cake Pattern では Scala の自分型アノテーション (self-type annotation) という機能を使います。これはクラスを定義するときに自分の型をそのクラス以外にもできるというものです。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7</pre></td><td class="code"><pre><span class="k">trait</span> <span class="nc">A</span> <span class="o">{</span> <span class="k">def</span> <span class="n">print</span><span class="o">(</span><span class="n">x</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span> <span class="n">println</span><span class="o">(</span><span class="n">x</span><span class="o">)</span> <span class="o">}</span>
+<span class="k">trait</span> <span class="nc">B</span> <span class="o">{</span> <span class="k">val</span> <span class="n">x</span><span class="k">:</span> <span class="kt">String</span> <span class="o">}</span>
+<span class="k">class</span> <span class="nc">C</span> <span class="o">{</span>
+  <span class="c1">// 自分の型は A と B をミクスインしたものである
+</span>  <span class="n">self</span><span class="k">:</span> <span class="kt">A</span> <span class="kt">with</span> <span class="kt">B</span> <span class="o">=&gt;</span>
+  <span class="k">def</span> <span class="n">f</span><span class="o">()</span> <span class="k">=</span> <span class="n">print</span><span class="o">(</span><span class="n">x</span><span class="o">)</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>のようにすると、 <code>C</code> は外からはただの <code>C</code> として見えますが、自分の中からはトレイト <code>A</code> と <code>B</code> をミクスインしているとみなせます。 <code>B.x</code> の具体的な実装は書いていませんがコンパイルは通ります。ただし、 <code>C</code> をインスタンス化するときに問題が起こります。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4</pre></td><td class="code"><pre><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">c</span> <span class="k">=</span> <span class="k">new</span> <span class="n">C</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">10</span><span class="k">:</span> <span class="kt">error:</span> <span class="kt">class</span> <span class="kt">C</span> <span class="kt">cannot</span> <span class="kt">be</span> <span class="kt">instantiated</span> <span class="kt">because</span> <span class="kt">it</span> <span class="kt">does</span> <span class="kt">not</span> <span class="kt">conform</span> <span class="kt">to</span> <span class="kt">its</span> <span class="kt">self-</span><span class="k">type</span> <span class="kt">C</span> <span class="kt">with</span> <span class="kt">A</span> <span class="kt">with</span> <span class="kt">B</span>
+<span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">c</span> <span class="k">=</span> <span class="k">new</span> <span class="n">C</span> <span class="k">with</span> <span class="n">A</span> <span class="k">with</span> <span class="n">B</span>
+<span class="o">&lt;</span><span class="n">console</span><span class="k">&gt;:</span><span class="mi">10</span><span class="k">:</span> <span class="kt">error:</span> <span class="kt">object</span> <span class="kt">creation</span> <span class="kt">impossible</span><span class="o">,</span> <span class="n">since</span> <span class="n">value</span> <span class="n">x</span> <span class="n">in</span> <span class="k">trait</span> <span class="nc">B</span> <span class="n">of</span> <span class="k">type</span> <span class="kt">String</span> <span class="kt">is</span> <span class="kt">not</span> <span class="kt">defined</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p><code>B.x</code> が定義されていないためインスタンスを作成できないと出ます。そこでミクスインのときに <code>B.x</code> を定義してやります。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3</pre></td><td class="code"><pre><span class="n">scala</span><span class="o">&gt;</span> <span class="k">val</span> <span class="n">c</span> <span class="k">=</span> <span class="k">new</span> <span class="n">C</span> <span class="k">with</span> <span class="n">A</span> <span class="k">with</span> <span class="n">B</span> <span class="o">{</span> <span class="k">val</span> <span class="n">x</span><span class="k">:</span> <span class="kt">String</span> <span class="o">=</span> <span class="s">"Hello"</span> <span class="o">}</span>
+<span class="n">scala</span><span class="o">&gt;</span> <span class="n">c</span><span class="o">.</span><span class="n">f</span>
+<span class="nc">Hello</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>(<code>A</code> と <code>B</code> を両方不完全な実装にしておくと似たような構文
+<code>new C with A { def print() { ... } } with B { val x = ... }</code> でインスタンス化することはできませんでした。これできるのか？)</p>
+
+<p>これ何が嬉しいのという話なんですが、外からは <code>C</code> として見えるが実は <code>A</code> と <code>B</code>
+に依存しているというのが表せるのです。「<code>C</code> というクラスが <code>A</code> と <code>B</code> に依存していて、かつその依存している実装を後から指定できる」というわけです。 Dependency
+Injection の臭いがしてきました。</p>
+
+<h2>Cake Pattern</h2>
+
+<p>さて、ようやく Cake Pattern に入ります。以下は
+<a href="http://eed3si9n.com/ja/real-world-scala-dependency-injection-di">実戦での Scala: Cake パターンを用いた Dependency Injection (DI)</a>
+を参考にしたものです。</p>
+
+<p>ユーザーを表すケースクラスとそれを扱うクラスを定義します。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10</pre></td><td class="code"><pre><span class="k">case</span> <span class="k">class</span> <span class="nc">User</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">email</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span>
+
+<span class="k">class</span> <span class="nc">UserRepository</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="n">authenticate</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">User</span><span class="o">)</span><span class="k">:</span> <span class="kt">User</span> <span class="o">=</span> <span class="o">{</span>
+    <span class="n">println</span><span class="o">(</span><span class="s">"authenticating: "</span> <span class="o">+</span> <span class="n">user</span><span class="o">)</span>
+    <span class="n">user</span>
+  <span class="o">}</span>
+  <span class="k">def</span> <span class="n">create</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">User</span><span class="o">)</span> <span class="k">=</span> <span class="n">println</span><span class="o">(</span><span class="s">"creating: "</span> <span class="o">+</span> <span class="n">user</span><span class="o">)</span>
+  <span class="k">def</span> <span class="n">delete</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">User</span><span class="o">)</span> <span class="k">=</span> <span class="n">println</span><span class="o">(</span><span class="s">"deleting: "</span> <span class="o">+</span> <span class="n">user</span><span class="o">)</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>ここで <code>UserRepository</code> クラスは単にユーザーを扱う関数を集めている名前空間の役割しかないため、 <code>object</code> として定義したくなる。しかし後のために普通のクラスとして定義しています。</p>
+
+<p>次にもう少しユーザーを扱うために抽象化されているはずである <code>UserService</code> を定義します。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8</pre></td><td class="code"><pre><span class="k">object</span> <span class="nc">UserService</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="n">authenticate</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">email</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">User</span> <span class="o">=</span>
+    <span class="nc">UserRepository</span><span class="o">.</span><span class="n">authenticate</span><span class="o">(</span><span class="nc">User</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">email</span><span class="o">))</span>
+  <span class="k">def</span> <span class="n">create</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">email</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span>
+    <span class="nc">UserRepository</span><span class="o">.</span><span class="n">create</span><span class="o">(</span><span class="nc">User</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">email</span><span class="o">))</span>
+  <span class="k">def</span> <span class="n">delete</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">User</span><span class="o">)</span> <span class="k">=</span>
+    <span class="nc">UserRepository</span><span class="o">.</span><span class="n">delete</span><span class="o">(</span><span class="n">user</span><span class="o">)</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>上で見たとおり、ここで <code>UserRepository</code> に依存しているとテストしにくくなります。そこで <code>UserRepository</code> を注入してほしいオブジェクトとしておくのでした。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8</pre></td><td class="code"><pre><span class="k">class</span> <span class="nc">UserService</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="n">authenticate</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">email</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">User</span> <span class="o">=</span>
+    <span class="n">userRepository</span><span class="o">.</span><span class="n">authenticate</span><span class="o">(</span><span class="nc">User</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">email</span><span class="o">))</span>
+  <span class="k">def</span> <span class="n">create</span><span class="o">(</span><span class="n">name</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">email</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span>
+    <span class="n">userRepository</span><span class="o">.</span><span class="n">create</span><span class="o">(</span><span class="nc">User</span><span class="o">(</span><span class="n">name</span><span class="o">,</span> <span class="n">email</span><span class="o">))</span>
+  <span class="k">def</span> <span class="n">delete</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">User</span><span class="o">)</span> <span class="k">=</span>
+    <span class="n">userRepository</span><span class="o">.</span><span class="n">delete</span><span class="o">(</span><span class="n">user</span><span class="o">)</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p><code>userRepository</code> はここでは定義されていませんが、これが注入してほしいオブジェクトであることを覚えておきます。さて、ここからまず <code>UserRepository</code> を名前空間トレイトに包みます。ここで <code>userRepository</code> は後から注入されるべきオブジェクトとして宣言だけしておきます。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11</pre></td><td class="code"><pre><span class="k">trait</span> <span class="nc">UserRepositoryComponent</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="n">userRepository</span><span class="k">:</span> <span class="kt">UserRepository</span>
+  <span class="k">class</span> <span class="nc">UserRepository</span> <span class="o">{</span>
+    <span class="k">def</span> <span class="n">authenticate</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">User</span><span class="o">)</span><span class="k">:</span> <span class="kt">User</span> <span class="o">=</span> <span class="o">{</span>
+      <span class="n">println</span><span class="o">(</span><span class="s">"authenticating user: "</span> <span class="o">+</span> <span class="n">user</span><span class="o">)</span>
+      <span class="n">user</span>
+    <span class="o">}</span>
+    <span class="k">def</span> <span class="n">create</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">User</span><span class="o">)</span> <span class="k">=</span> <span class="n">println</span><span class="o">(</span><span class="s">"creating user: "</span> <span class="o">+</span> <span class="n">user</span><span class="o">)</span>
+    <span class="k">def</span> <span class="n">delete</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">User</span><span class="o">)</span> <span class="k">=</span> <span class="n">println</span><span class="o">(</span><span class="s">"deleting user: "</span> <span class="o">+</span> <span class="n">user</span><span class="o">)</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>同じく <code>UserService</code> を名前空間トレイト <code>UserServiceComponent</code> に包みますが、そこで <code>UserRepositoryComponent</code> に依存していることを自分型アノテーションで示します。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11</pre></td><td class="code"><pre><span class="k">trait</span> <span class="nc">UserServiceComponent</span> <span class="o">{</span>
+  <span class="n">self</span><span class="k">:</span> <span class="kt">UserRepositoryComponent</span> <span class="o">=&gt;</span>
+  <span class="k">val</span> <span class="n">userService</span><span class="k">:</span> <span class="kt">UserService</span>
+  <span class="k">class</span> <span class="nc">UserService</span> <span class="o">{</span>
+    <span class="k">def</span> <span class="n">authenticate</span><span class="o">(</span><span class="n">username</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">password</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span><span class="k">:</span> <span class="kt">User</span> <span class="o">=</span>
+      <span class="n">userRepository</span><span class="o">.</span><span class="n">authenticate</span><span class="o">(</span><span class="n">username</span><span class="o">,</span> <span class="n">password</span><span class="o">)</span>
+    <span class="k">def</span> <span class="n">create</span><span class="o">(</span><span class="n">username</span><span class="k">:</span> <span class="kt">String</span><span class="o">,</span> <span class="n">password</span><span class="k">:</span> <span class="kt">String</span><span class="o">)</span> <span class="k">=</span>
+      <span class="n">userRepository</span><span class="o">.</span><span class="n">create</span><span class="o">(</span><span class="k">new</span> <span class="nc">User</span><span class="o">(</span><span class="n">username</span><span class="o">,</span> <span class="n">password</span><span class="o">))</span>
+    <span class="k">def</span> <span class="n">delete</span><span class="o">(</span><span class="n">user</span><span class="k">:</span> <span class="kt">User</span><span class="o">)</span> <span class="k">=</span> <span class="n">userRepository</span><span class="o">.</span><span class="n">delete</span><span class="o">(</span><span class="n">user</span><span class="o">)</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>最後に、これらのトレイトを継承した環境トレイトを作ります。ここでは実際にアプリケーションに使うものを <code>RealWorld</code> としました。そしてそのトレイト内で
+<code>UserRepositoryComponent</code> と <code>UserServiceComponent</code> をインスタンス化して保持しておきます。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6</pre></td><td class="code"><pre><span class="k">trait</span> <span class="nc">RealWorld</span>
+  <span class="k">extends</span> <span class="nc">UserRepositoryComponent</span>
+  <span class="k">with</span> <span class="nc">UserServiceComponent</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="n">userRepositoryComponent</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">UserRepositoryComponent</span>
+  <span class="k">val</span> <span class="n">userServiceComponent</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">UserServiceComponent</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>こうしておくと、 <code>Main</code> オブジェクトで <code>RealWorld</code> を継承するだけでアプリケーション用のコードを書くことができます。すべての依存性が <code>RealWorld</code> トレイトに集まっているのがわかります。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5</pre></td><td class="code"><pre><span class="k">object</span> <span class="nc">Main</span> <span class="k">extends</span> <span class="nc">RealWorld</span> <span class="o">{</span>
+  <span class="k">def</span> <span class="n">main</span><span class="o">(</span><span class="n">args</span><span class="k">:</span> <span class="kt">Array</span><span class="o">[</span><span class="kt">String</span><span class="o">])</span> <span class="o">{</span>
+    <span class="o">...</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>また、テスト時には次のようにすべての依存性をモックした <code>TestEnvironment</code> を使うことができます。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6</pre></td><td class="code"><pre><span class="k">trait</span> <span class="nc">TestEnvironment</span>
+  <span class="k">extends</span> <span class="nc">UserRepositoryComponent</span>
+  <span class="k">with</span> <span class="nc">UserServiceComponent</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="n">userRepositoryComponent</span> <span class="k">=</span> <span class="n">mock</span><span class="o">[</span><span class="kt">UserRepositoryComponent</span><span class="o">]</span>
+  <span class="k">val</span> <span class="n">userServiceComponent</span> <span class="k">=</span> <span class="n">mock</span><span class="o">[</span><span class="kt">UserServiceComponent</span><span class="o">]</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>そして、単体テストしたいクラスは実際にインスタンス化して試すとよいでしょう。</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4</pre></td><td class="code"><pre><span class="k">class</span> <span class="nc">UserServiceSpec</span> <span class="k">extends</span> <span class="nc">Specification</span> <span class="k">with</span> <span class="nc">TestEnvironment</span> <span class="o">{</span>
+  <span class="k">override</span> <span class="k">val</span> <span class="n">userService</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">UserService</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>実際に動く完全なコードは一番下に GitHub へのリンクを置いておきました。これを見るとうまいこと依存性を分離して保管できており、しかもテスト時にもうまくモックできていることがわかります。</p>
+
+<h2>考察</h2>
+
+<p>自分型アノテーションを使うところ、べつに
+<code>UserServiceComponent extends UserRepositoryComponent</code> と書いても問題なく動くのだけど、自分型アノテーションを使うのは環境トレイトを作るときに依存性を見やすくすることが目的だろうか。つまり</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12</pre></td><td class="code"><pre><span class="k">trait</span> <span class="nc">UserRepositoryComponent</span> <span class="o">{</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+
+<span class="k">trait</span> <span class="nc">UserServiceComponent</span> <span class="k">extends</span> <span class="nc">UserRepositoryComponent</span> <span class="o">{</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+
+<span class="k">trait</span> <span class="nc">RealWorld</span> <span class="k">extends</span> <span class="nc">UserServiceComponent</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="n">userRepositoryComponent</span> <span class="k">=</span> <span class="o">...</span>
+  <span class="k">val</span> <span class="n">userServiceComponent</span> <span class="k">=</span> <span class="o">...</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>と書いても問題なく動くのだが、それより</p>
+<div class="highlight scala"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15</pre></td><td class="code"><pre><span class="k">trait</span> <span class="nc">UserRepositoryComponent</span> <span class="o">{</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+
+<span class="k">trait</span> <span class="nc">UserServiceComponent</span> <span class="o">{</span>
+  <span class="n">self</span><span class="k">:</span> <span class="kt">UserRepositoryComponent</span> <span class="o">=&gt;</span>
+  <span class="o">...</span>
+<span class="o">}</span>
+
+<span class="k">trait</span> <span class="nc">RealWorld</span>
+  <span class="k">extends</span> <span class="nc">UserRepositoryComponent</span>
+  <span class="k">with</span> <span class="nc">UserServiceComponent</span> <span class="o">{</span>
+  <span class="k">val</span> <span class="n">userRepositoryComponent</span> <span class="k">=</span> <span class="o">...</span>
+  <span class="k">val</span> <span class="n">userServiceComponent</span> <span class="k">=</span> <span class="o">...</span>
+<span class="o">}</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>と書くほうが <code>RealWorld</code> が <code>extends</code> しているトレイトと注入している依存性が一対一に対応するぶん見やすい。</p>
+
+<p>あと Haskell で似たようなことできないかなーと思って探してみたら予想通り型クラスを使った <a href="http://www.cs.rutgers.edu/~ccshan/prepose/prepose.pdf">それっぽい論文</a> を見つけたのでそのうち読む。</p>
+
+<h2>まとめ</h2>
+
+<p>今回書いたコードは GitHub にまとめておいた。 <code>TwitterBot</code> の例も Cake Pattern で書いてみたよ！といっても同じことを繰り返しただけだけど…</p>
+
+<ul>
+<li><a href="https://github.com/daimatz/CakePattern">daimatz/CakePattern</a></li>
+</ul>
+
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'daimatz-net'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+   </div><!-- /#contents-->
+   <div id="pageTop">
+      <a href="#top">ページのトップへ戻る</a>
+   </div><!-- /#pageTop-->
+   <div id="footer">
+      <div class="copyright">
+          <p>Copyright &copy; 2014 daimatz</p>
+      </div>
+   </div><!-- /#footer-->
+</div><!-- /#top-->
+</body>
+</html>

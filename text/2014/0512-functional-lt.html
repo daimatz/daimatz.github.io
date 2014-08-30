@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<meta http-equiv="imagetoolbar" content="no" />
+<meta name="description" content="daimatz の個人サイト" />
+<meta name="keywords" content="daimatz" />
+<link href="/css/normalize.css" rel="stylesheet" type="text/css" /><link href="/css/common.css" rel="stylesheet" type="text/css" /><link href="/css/syntax.css" rel="stylesheet" type="text/css" />
+<script src="/js/jquery.js" type="text/javascript"></script><script src="/js/common.js" type="text/javascript"></script>
+<title>関数型LT大会で話したこと - daimatz.net -</title>
+<link href="/img/favicon.ico" rel="icon" type="image/ico" />
+</head>
+<body>
+<div id="top">
+   <div id="header">
+      <h1><a href="/">daimatz.net</a></h1>
+      <div id="navi">
+         <ul>
+         <li><a href="/text/atom.xml"><img alt="rss" src="/img/rss.png" /></a></li>
+         <li><a href="https://twitter.com/daimatz"><img alt="twitter" src="/img/twitter.png" /></a></li>
+         <li><a href="https://github.com/daimatz"><img alt="twitter" src="/img/github.png" /></a></li>
+         </ul>
+      </div><!-- /#navi-->
+   </div><!-- /#header-->
+   <div id="menu">
+      <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/text/">Text</a></li>
+      <li><a href="/about.html">About</a></li>
+      </ul>
+   </div><!-- /#menu-->
+   <div id="contents">
+      <h1>関数型LT大会で話したこと</h1>
+        <p class="info">
+    Posted on 2014-08-30
+    tags: <a href="/text/ruby.html">ruby</a>, <a href="/text/github.html">github</a>, <a href="/text/travis.html">travis</a>
+  </p>
+  <h2>関数型LT大会</h2>
+
+<p>クックパッド社で行われていた<a href="http://sugoihaskell.github.io/">すごいHaskellたのしく学ぼう輪読会</a>
+の完走を記念して<a href="http://connpass.com/event/5795/">関数型LT大会という会が開催された</a>。クックパッド関係なく関数型に興味ある人が集まってワイワイする感じっぽかったので、ひとつなにか話して叩かれに行ってみるかと思って発表してきた。そういえばクックパッド社に行くのは2回目であった。</p>
+
+<h2>自分の発表</h2>
+
+<script async class="speakerdeck-embed" data-id="1701f420bb5a0131d135622ec9067e44" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+
+<p><br/></p>
+
+<p>Scala で初めて Future という概念を知ったのだけど、触り始めの頃はどういうコードを書けばいいのかも全然良くわからなくて苦しんでいた。ふと「これって Haskell の IO
+と同じじゃね？」と気づいてから急に視界が開けた気がしたので、そのへんのことを話してきた。ググっても「Future と IO 似ているよね」という説は全然見つからず、「いや全然似てねえよバカ」とかマサカリが飛んでくることも覚悟していたけど概ね生暖かく迎えられたようで安心した。</p>
+
+<p>後で <a href="https://twitter.com/eagletmt">@eagletmt</a> 氏に「あれってモナドだって言ってるだけですよねえ」と突っ込まれたのでそのへんの話を追記した。たしかにモナドの特徴を言っているだけだが、重要なのは基本的に Future は一方向性のモナドであるということで、気軽にブロックして中身を取り出すようなことをやってはいけないのである。 Twitter の
+Effective Scala にも<a href="http://twitter.github.io/effectivescala/#Concurrency-Futures">そのへんことが書いてある</a>し、
+Finagle について書かれたドキュメントを見るとブロックするなと書いてあるのが頻繁に見つかる。
+<s>そのへん理解してないんじゃないかなーと思うコードに以前苦しめられた過去が</s></p>
+
+<p>ある関数内で Future を呼んでいるのにその戻り値が <code>Future[A]</code> というシグネチャになっていない関数 (こういう関数を簡単に書けてしまう) というのは、よほどのことがない限りアンチパターンである。具体的に許されるのは次の2パターンくらいしかないんじゃないかなーと思っている。</p>
+
+<ol>
+<li>一番最後に IO 処理をして終わる場合</li>
+<li>タイムアウトを設定し、それまでに戻って来なかったら切り捨てて計算を続ける場合</li>
+</ol>
+
+<p>1 は Future 内で行われる IO 処理を「投げっぱなし」にすることで、その IO 処理内で適切にエラーハンドリングされており自分でエラーハンドリングを書かなくていいと確信できる場合である。その場合は途中で呼んだ Future を投げっぱなしにして、非同期で
+IO 処理だけさせてメインスレッドは次に進むということをやって良い。</p>
+
+<p>2 は必要な情報が全部は集まっていないけどとりあえずレスポンスを返さなきゃいけないような場面において、呼んだ Future がタイムアウト前に返ってこなければ見捨てるというもの。ある意味同期処理なわけで、基本的にはやってはいけないがタイムアウトという条件が付いているなら話は別だ。タイムアウト時間とそのイベントハンドラを登録し、それが呼ばれた時点で対象の Future に対してそれが完了しているか否かを問い合わせ、完了していれば中身の値を取得して同期的に次の計算に移ることになるので Future
+の文脈は消える。戻ってこなかった場合はその Future をキャンセルしておく
+(<code>com.twitter.util.Future</code> では <code>raise(new FutureCancelledException)</code> を呼ぶ)
+のがたぶんマナー的に正しい。</p>
+
+<p>twitter/util はこのへんうまく出来ていて、呼んでいる Future が戻ってきたら処理を続けるとか、あるいは同時に呼んでいるどれかが戻ってきたら処理を続けるみたいな、イベント駆動な設計になっている。 <code>select</code> とか <code>epoll</code> といった UNIX
+システムコールに関連した話になってくるわけだが、 <code>com.twitter.util.Future</code> には
+<code>select</code> と <code>poll</code> という名前そのままの API がある。
+<code>scala.concurrent.Future</code> にはその手の話はないっぽい？システムコールレベルではまだあまり使ったことがないので触ってみないと…</p>
+
+<h2>他人の発表</h2>
+
+<p>勉強会での発表というものは自分が勉強するためにあるものであって、自分が勉強したことに比べれば話す内容は他人にとってもわかりやすくするものであると思っていた。だが他の人達の発表を聞いていても意図的にレベルを落としたように感じられるものはなく、むしろみんな全力で準備している感じがしてすごかった。「それ知ってるよ〜」という類のものはほとんどなかったし、自分の到底理解の及ばない型レベルガチ勢の方々の発表もわかりやすくて面白かった。 LLVM や TaPL, さらには圏論が一般教養として扱われていた感もあり関数型界隈はレベル高いなあと思った。</p>
+
+<h2>その他</h2>
+
+<p><a href="https://twitter.com/rejasupotaro">@rejasupotaro</a> さんとは以前
+<a href="http://www.zusaar.com/event/3477003">第7回若手Webエンジニア交流会</a>で少しだけ話したのだが、昨日はより突っ込んだ話をした。
+Twitter のオープンソースのコードを読んでいると、 Scala の標準ライブラリに比べてケチくさい最適化を頑張っていないように見えるとか、 Twitter をしてもまだ Netty 4
+に乗り換えられない感じなんだろうなあとか。結論としてはジャバこそが実用的な言語ということになった。
+<blockquote class="twitter-tweet" lang="en"><p>レジャスポ氏に「時代はジャバだ」と力説してしまった <a href="https://twitter.com/search?q=%23functionalLT&amp;src=hash">#functionalLT</a></p>&mdash; matsumoto (@daimatz) <a href="https://twitter.com/daimatz/statuses/465398393276088321">May 11, 2014</a></blockquote><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+帰りで少し一緒になった <a href="https://twitter.com/taiki45">@taiki45</a> さんともそんな話をした。もうちょっと我々のアプローチがどの程度どうなのかという話とか、他のカイシャさんでそのへんどうしているのとかいう話を聞きたい気もした。</p>
+
+<p>あとは、今回も Twitter でしか見たことのなかった何人かの人達の存在を確認した。</p>
+
+<p>twitter/util と twitter/finagle 読もうと言いつつ、いやそこそこ読んではいるんだけどどうしても finagle のタスクスケジューリング周りがつかめていなくて、困っている。標準版の Future は FuturePool を直接触る設計になっていて直感的だが、 Twitter
+版の Future は finagle を普通に触っている限り FuturePool
+というかタスクスケジューラが一切表に出てこない。裏で謎スケジューリングしていたり、かといえば普通に <code>ExecutorService</code>
+を作っているところもあったりで、結局どこが実態なのかわかっていない。一人
+finagle コードリーディングでも記録に残していくかなーと思っているところ。関連して twitter/util と netty もある程度読むことになりそう。</p>
+
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'daimatz-net'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+   </div><!-- /#contents-->
+   <div id="pageTop">
+      <a href="#top">ページのトップへ戻る</a>
+   </div><!-- /#pageTop-->
+   <div id="footer">
+      <div class="copyright">
+          <p>Copyright &copy; 2014 daimatz</p>
+      </div>
+   </div><!-- /#footer-->
+</div><!-- /#top-->
+</body>
+</html>

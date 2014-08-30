@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<meta http-equiv="imagetoolbar" content="no" />
+<meta name="description" content="daimatz の個人サイト" />
+<meta name="keywords" content="daimatz" />
+<link href="/css/normalize.css" rel="stylesheet" type="text/css" /><link href="/css/common.css" rel="stylesheet" type="text/css" /><link href="/css/syntax.css" rel="stylesheet" type="text/css" />
+<script src="/js/jquery.js" type="text/javascript"></script><script src="/js/common.js" type="text/javascript"></script>
+<title>Middleman と GitHub Pages でブログを作った話 - daimatz.net -</title>
+<link href="/img/favicon.ico" rel="icon" type="image/ico" />
+</head>
+<body>
+<div id="top">
+   <div id="header">
+      <h1><a href="/">daimatz.net</a></h1>
+      <div id="navi">
+         <ul>
+         <li><a href="/text/atom.xml"><img alt="rss" src="/img/rss.png" /></a></li>
+         <li><a href="https://twitter.com/daimatz"><img alt="twitter" src="/img/twitter.png" /></a></li>
+         <li><a href="https://github.com/daimatz"><img alt="twitter" src="/img/github.png" /></a></li>
+         </ul>
+      </div><!-- /#navi-->
+   </div><!-- /#header-->
+   <div id="menu">
+      <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/text/">Text</a></li>
+      <li><a href="/about.html">About</a></li>
+      </ul>
+   </div><!-- /#menu-->
+   <div id="contents">
+      <h1>Middleman と GitHub Pages でブログを作った話</h1>
+        <p class="info">
+    Posted on 2014-08-30
+    tags: <a href="/text/ruby.html">ruby</a>, <a href="/text/github.html">github</a>, <a href="/text/travis.html">travis</a>
+  </p>
+  <h2>tl;dr</h2>
+
+<ul>
+<li><a href="http://middlemanapp.com/">Middleman</a></li>
+<li><a href="https://pages.github.com/">GitHub Pages</a> のユーザーサイト</li>
+<li>独自ドメイン使用</li>
+<li>ソースを push すると <a href="https://travis-ci.org/">Travis CI</a> がデプロイ</li>
+</ul>
+
+<h2>Middleman</h2>
+
+<p><a href="http://middlemanapp.com/">Middleman</a> は最近よく使われている気がする静的サイトジェネレータ。少し前から静的サイトジェネレータは Middleman 一強感あったので流行に乗り遅れまいと使ってみることにした。この種のソフトウェアで Ruby 製のものは古くから <a href="http://jekyllrb.com/">Jekyll</a> が有名でしたが、
+Middleman だと Asset Pipeline の概念だったりテンプレートに erb, haml, slim が使えたりといったところで Rails に近いっぽいところが受けているのだとか。</p>
+
+<p><a href="http://middlemanapp.com/basics/getting-started/">公式のチュートリアル</a>と、<a href="http://middlemanapp.com/jp/basics/getting-started/">その日本語版</a>が充実しているので一通り読めばだいたいのことはできる気がします。以下、ハマったところやちょっとしたカスタマイズだけ。</p>
+
+<h3>後からブログ仕様にする</h3>
+
+<p><code>middleman init</code> するときに <code>--template=blog</code> を付けずに実行してしまい
+(というかこんなオプションがあるのを知らなかった) 、ある程度サイトを作ってからブログ機能をつけることになってしまった。するとブログテンプレートを使った場合の
+<code>config.rb</code> や他のファイルの中身がわからないので、解説サイトを見ても何のことだかわからない、ということがあった。</p>
+
+<p><a href="https://github.com/middleman/middleman-blog/tree/master/lib/middleman-blog/template">middleman-blog/lib/middleman-blog/template</a> にテンプレートファイルが一通り置いてあるので、これをコピーすれば良い。</p>
+
+<h3>VM 内で livereload</h3>
+
+<p><a href="https://github.com/middleman/middleman-livereload">middleman-livereload</a> という拡張があり、これは記事を書いている途中に保存すると勝手にブラウザがリロードしてくれるものです。使っている <a href="https://github.com/johnbintz/rack-livereload">rack-livereload</a> がファイルの変更を検知して
+WebSocket でブラウザ側に伝えて、 JavaScript でリロードとかやっているっぽい。以前似たようなものを書いたことがあるのであーあんな感じだろうなと想像しつつ。</p>
+
+<p>最近は <a href="http://vagrantup.com/">Vagrant</a> で全部 VM の中でやるようにしているのですが、ネットワーク共有をポートフォワードでやっている場合は rack-livereload
+のデフォルトである 35729 番をフォワードしておく必要があります。あと、 middleman のプレビューのデフォルトである 4567 番もフォワードしておきます。</p>
+<div class="highlight ruby"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2</pre></td><td class="code"><pre><span class="n">config</span><span class="p">.</span><span class="nf">vm</span><span class="p">.</span><span class="nf">network</span> <span class="s2">"forwarded_port"</span><span class="p">,</span> <span class="ss">guest: </span><span class="mi">4567</span><span class="p">,</span> <span class="ss">host: </span><span class="mi">4567</span> <span class="c1"># middleman</span>
+<span class="n">config</span><span class="p">.</span><span class="nf">vm</span><span class="p">.</span><span class="nf">network</span> <span class="s2">"forwarded_port"</span><span class="p">,</span> <span class="ss">guest: </span><span class="mi">35729</span><span class="p">,</span> <span class="ss">host: </span><span class="mi">35729</span> <span class="c1"># livereload</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>そして <code>config.rb</code> に <code>activate :livereload</code> を書いておく。すると</p>
+<div class="highlight shell"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1</pre></td><td class="code"><pre><span class="gp">$ </span>middleman
+</pre></td></tr></tbody></table>
+</div>
+
+<p>と打つと <code>localhost:4567</code> でプレビューでき、 livereload もできる。</p>
+
+<h3>日本語で80行で改行するのを無視する</h3>
+
+<p>エディタで書くときは80文字で折り返したいのだけど、日本語の場合それを普通にレンダリングさせてブラウザで見ると改行位置で半角スペースが開いてしまう。それが嫌だったので、 Markdown レンダリングエンジンをいじって改行を取り除く処理をつけている。
+<a href="https://github.com/vmg/redcarpet">Redcarpet</a> での処理。</p>
+<div class="highlight ruby"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5</pre></td><td class="code"><pre><span class="k">class</span> <span class="nc">Redcarpet</span><span class="o">::</span><span class="no">Render</span><span class="o">::</span><span class="no">HTML</span>
+  <span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">text</span><span class="p">.</span><span class="nf">gsub</span><span class="p">(</span><span class="sr">/([^\x01-\x7E])\n([^\x01-\x7E])/</span><span class="p">,</span> <span class="s1">'\1\2'</span><span class="p">)</span>
+  <span class="k">end</span>
+<span class="k">end</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>これを <code>config.rb</code> に書いておけば良い。</p>
+
+<h3>シンタックスハイライト</h3>
+
+<p>シンタックスハイライトは <a href="https://github.com/jneen/rouge">Rouge</a> を Gemfile に書いておくだけ。少し使ってみている限りは特に問題なさそう。</p>
+
+<h2>GitHub Pages のユーザーサイト</h2>
+
+<p><a href="https://pages.github.com/">GitHub Pages</a> は github.io ドメインで静的なファイルをホスティングできるサービス。
+<a href="https://help.github.com/articles/user-organization-and-project-pages">User や Organization のページと Project ごとのページの2種類</a>
+あるが、ここでは個人ページを作ることを想定しているので User &amp; Organization のほうを使う。</p>
+
+<p>この場合、 User もしくは Organization に <code>[user or organization].github.io</code> というリポジトリを作り、その master ブランチに静的ファイルを push することで
+<code>https://[user or organization].github.io</code> にアクセスできるようになる。自分の場合は <a href="https://github.com/daimatz/daimatz.github.io">daimatz.github.io</a> とする。</p>
+
+<h2>独自ドメイン使用</h2>
+
+<p>GitHub Pages で独自ドメインを使う場合やることは以下のとおり：</p>
+
+<ol>
+<li>DNS レコードの設定</li>
+<li><code>CNAME</code> ファイルを置く</li>
+</ol>
+
+<h3>DNS レコードの設定</h3>
+
+<p>CNAME を設定する方法と A レコードを設定する方法がある。自分の場合は <code>daimatz.net</code> を使いたかったので、「<a href="https://help.github.com/articles/setting-up-a-custom-domain-with-github-pages">apex domain の場合は A レコードを設定せよ</a>」との指示通り A レコードを設定する。</p>
+
+<p>ググると <code>204.232.175.78</code> を使うといい、という情報が見つかるのだが、一度それで
+push すると「その IP アドレスは deprecated なので<a href="https://help.github.com/articles/setting-up-a-custom-domain-with-github-pages">公式ページ</a>に書いてある正しいものを使ってね」というメールが来た。そこから
+<a href="https://help.github.com/articles/tips-for-configuring-an-a-record-with-your-dns-provider">A レコードの設定</a>ページに飛ぶと、現時点では</p>
+
+<ul>
+<li>192.30.252.153</li>
+<li>192.30.252.154</li>
+</ul>
+
+<p>の2つを使えと書いてある。</p>
+
+<p>自分は VALUE DOMAIN を使っているので DNS 設定ページで次のように記入した。</p>
+<div class="highlight plaintext"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2</pre></td><td class="code"><pre>a @ 192.30.252.153
+a @ 192.30.252.154
+</pre></td></tr></tbody></table>
+</div>
+
+<h3>CNAME ファイルを置く</h3>
+
+<p>GitHub Pages リポジトリの master ブランチ直下に <code>CNAME</code> というファイルを置き、その中に独自ドメインを書く。すると、 <code>http://[user or organization].github.io</code> にアクセスされたときにそのドメインにリダイレクトしてくれる。</p>
+
+<p>middleman を使う場合、 <code>source/</code> 直下に置いて次のようにするのが良いと思う。</p>
+<div class="highlight ruby"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1</pre></td><td class="code"><pre><span class="n">page</span> <span class="s1">'CNAME'</span><span class="p">,</span> <span class="ss">layout: </span><span class="kp">false</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<h2>ソースを push すると Travis CI がデプロイ</h2>
+
+<p>Travis CI は言わずと知れたクラウド CI サービスですが、これをデプロイに使おうとすると少し面倒な設定が必要になる。ビルドログがダダ漏れなので認証情報をそのまま書くわけにはいかない。</p>
+
+<h3>認証情報の持ち方</h3>
+
+<p>まず Travis が GitHub リポジトリに push できるようにする方法だが、これはアプリケーション登録して Access Token を設定すれば良い。
+<a href="https://github.com/settings/applications">自分の設定の Applications ページ</a>に行き、 Personal
+access tokens の Generate new token からトークンを生成する。</p>
+
+<p>さて、そのトークンを Travis に教える方法だが、このために <a href="http://docs.travis-ci.com/user/encryption-keys/">Travis CI に暗号化の仕組みがある</a>。 travis コマンドを使って次のようにする。</p>
+<div class="highlight shell"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2</pre></td><td class="code"><pre><span class="gp">$ </span>gem install travis
+<span class="gp">$ </span>travis encrypt -r daimatz/daimatz.github.io <span class="s2">"GH_TOKEN=&lt;token&gt;"</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>そして <code>.travis.yml</code> に次のように書く。</p>
+<div class="highlight yaml"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3</pre></td><td class="code"><pre><span class="s">env</span><span class="pi">:</span>
+  <span class="s">global</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">secure</span><span class="pi">:</span> <span class="s2">"</span><span class="s">.............."</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>すると、ビルド時に復号化した <code>GH_TOKEN=&lt;token&gt;</code> が展開される。もちろんビルドログには表示されない。</p>
+
+<h3>Travis が master ブランチを push</h3>
+
+<p><code>[user or organization].github.io</code> ではデプロイするファイルは master ブランチに置かなければならない。そこで、ソースはすべて source ブランチに置いておき、
+source ブランチを push すると Travis が master ブランチに成果物を commit して
+push という手順をとることになる。 master に push する用のリポジトリを build というディレクトリで clone してきて、 <code>middleman build</code> したときに build ディレクトリに入るようにする。具体的には次のような感じ。</p>
+<div class="highlight yaml"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9</pre></td><td class="code"><pre><span class="s">before_script</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">git clone --quiet https://github.com/daimatz/daimatz.github.io build</span>
+<span class="s">script</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">bundle exec middleman build</span>
+<span class="s">after_success</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="s">cd build</span>
+    <span class="pi">-</span> <span class="s">git add -A .</span>
+    <span class="pi">-</span> <span class="s">git commit -m "Update [ci skip]"</span>
+    <span class="pi">-</span> <span class="s1">'</span><span class="s">[</span><span class="nv"> </span><span class="s">"$TRAVIS_BRANCH"</span><span class="nv"> </span><span class="s">==</span><span class="nv"> </span><span class="s">"source"</span><span class="nv"> </span><span class="s">]</span><span class="nv"> </span><span class="s">&amp;&amp;</span><span class="nv"> </span><span class="s">git</span><span class="nv"> </span><span class="s">push</span><span class="nv"> </span><span class="s">--quiet</span><span class="nv"> </span><span class="s">https://$GH_TOKEN@github.com/daimatz/daimatz.github.io</span><span class="nv"> </span><span class="s">master</span><span class="nv"> </span><span class="s">2&gt;</span><span class="nv"> </span><span class="s">/dev/null'</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p><code>git push</code> 時に <code>--quiet</code> を付けないとトークンが表示されてしまうので注意。</p>
+
+<p>Travis では<a href="http://docs.travis-ci.com/user/how-to-skip-a-build/">コミットメッセージに
+<code>[ci skip]</code> という文字列を入れておくと、そのコミットについてはビルドしない</a>。こうしないと Travis が master ブランチに push したコミットについてまた CI が走ってしまい、 <code>.travis.yml</code> がないためビルドが失敗してエラーメールが飛んでくることになる。</p>
+
+<h2>まとめ</h2>
+
+<p><a href="https://github.com/daimatz/daimatz.github.io/tree/source">ソースを見てもらう</a>のが一番わかりやすい気がする。</p>
+
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'daimatz-net'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+   </div><!-- /#contents-->
+   <div id="pageTop">
+      <a href="#top">ページのトップへ戻る</a>
+   </div><!-- /#pageTop-->
+   <div id="footer">
+      <div class="copyright">
+          <p>Copyright &copy; 2014 daimatz</p>
+      </div>
+   </div><!-- /#footer-->
+</div><!-- /#top-->
+</body>
+</html>

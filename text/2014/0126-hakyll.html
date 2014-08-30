@@ -1,0 +1,270 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<meta http-equiv="imagetoolbar" content="no" />
+<meta name="description" content="daimatz の個人サイト" />
+<meta name="keywords" content="daimatz" />
+<link href="/css/normalize.css" rel="stylesheet" type="text/css" /><link href="/css/common.css" rel="stylesheet" type="text/css" /><link href="/css/syntax.css" rel="stylesheet" type="text/css" />
+<script src="/js/jquery.js" type="text/javascript"></script><script src="/js/common.js" type="text/javascript"></script>
+<title>サイト作った - daimatz.net -</title>
+<link href="/img/favicon.ico" rel="icon" type="image/ico" />
+</head>
+<body>
+<div id="top">
+   <div id="header">
+      <h1><a href="/">daimatz.net</a></h1>
+      <div id="navi">
+         <ul>
+         <li><a href="/text/atom.xml"><img alt="rss" src="/img/rss.png" /></a></li>
+         <li><a href="https://twitter.com/daimatz"><img alt="twitter" src="/img/twitter.png" /></a></li>
+         <li><a href="https://github.com/daimatz"><img alt="twitter" src="/img/github.png" /></a></li>
+         </ul>
+      </div><!-- /#navi-->
+   </div><!-- /#header-->
+   <div id="menu">
+      <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/text/">Text</a></li>
+      <li><a href="/about.html">About</a></li>
+      </ul>
+   </div><!-- /#menu-->
+   <div id="contents">
+      <h1>サイト作った</h1>
+        <p class="info">
+    Posted on 2014-08-30
+    tags: <a href="/text/ruby.html">ruby</a>, <a href="/text/github.html">github</a>, <a href="/text/travis.html">travis</a>
+  </p>
+  <h2>作ってみた</h2>
+
+<p>もう何番煎じかわからないレベルだけど <a href="http://jaspervdj.be/hakyll/">Hakyll</a>
+と <a href="http://mew.org/~kazu/proj/mighttpd/">Mighttpd</a> で作ってみた。</p>
+
+<p>Hakyll は Ruby 製の <a href="http://jekyllrb.com/">Jekyll</a> の Haskell クローンで、これらは
+<a href="https://www.google.co.jp/search?q=%E9%9D%99%E7%9A%84%E3%82%B5%E3%82%A4%E3%83%88%E3%82%B8%E3%82%A7%E3%83%8D%E3%83%AC%E3%83%BC%E3%82%BF&amp;lr=lang_ja">静的サイトジェネレータ</a>
+と呼ばれる類のソフトウェアである。
+Hakyll はバックグラウンドに <a href="http://johnmacfarlane.net/pandoc/">Pandoc</a>
+を使っており Pandoc のサポートする書式ならなんでも使える (たぶん) 。
+Ruby も好きなので Jekyll を使うのもアリだったが、遠い昔よくわからずに使ってみてなんだかよくわからんなあという印象が先行してしまったため今回は Hakyll にした。</p>
+
+<p>また Mighttpd (マイティー) は Haskell 製の HTTP サーバで、
+<a href="http://nginx.org/">nginx</a> よりパフォーマンスが出るらしい。ソースコードは1500行程度で非常にシンプル。今回は使うだけで中身を全然触れていないのだけどそのうちこれも読む。</p>
+
+<p>作成の際には <a href="http://jaspervdj.be/hakyll/">Hakyll 公式ページ</a> はもちろん、このネタの日本での第一人者と思われる
+<a href="http://tanakh.jp/posts/2011-11-05-haskell-infra.html">@tanakhさんのページ</a>
+も大いに参考にした。</p>
+
+<h2>経緯など</h2>
+
+<p>これまでに何度か自分のブログを作ったことはあった。最初は <a href="http://d.hatena.ne.jp/">はてなダイアリー</a> 、次は
+<a href="http://pages.github.com/">GitHub Pages</a> を使ったもので、最後に <a href="http://hatenablog.com/">はてなブログ</a> である。しかしそのどれもが半年〜1年ほどしか続かなかった。気分を変えるために異なるサービスをいくつか使ってみたが、結局長続きするものはなかった。</p>
+
+<p>なぜ長続きしなかったのか。生活環境の変化により文章を書くのが厳しくなったとか、デザインがみんな同じで気に入らなかったとか、とか、そういう話はある。しかし重要なのは本気度が足りないことだと思った。エンジニアは常に学ばなければ死んでしまう生き物である。学ぶ際にはインプットだけではあまり意味がなく、アウトプットこそが重要であることはよく知られている。これから自分のドメインを使ってきちんとアウトプットしていくという決意も込めて新しく作ることにした。自分のお金でやるならきちんと書くだろう。たぶん。この記事はその第一歩である。</p>
+
+<p>最近大学の後輩たちの間で日記コンテンツを作るのが流行しており、本サイトもその影響を受けたことは否めない。</p>
+
+<h2>技術的な話</h2>
+
+<h3>Hakyll</h3>
+
+<p>ルーティングの書き方など最初は見よう見まねであったが、しばらくいじると感覚がつかめてくる。そこで少し複雑な設定も行ったのでそれについて書くことにする。例えば Hakyll では記事のメタデータを以下のようなフォーマットで記事の先頭に記述する。</p>
+<div class="highlight markdown"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5</pre></td><td class="code"><pre><span class="p">----</span>
+title: タイトル
+description: 概要
+<span class="gh">published: 2014-01-05
+----
+</span></pre></td></tr></tbody></table>
+</div>
+
+<p>ここで横着な私は <code>published</code> を書くのが面倒くさいと思った。そこで見てみると、世の Hakyll を使っているサイトには URL が <code>YYYY-mm-dd</code>
+の形式になっているものが多い。
+Hakyll のソースを見てみると確かに <code>Hakyll.Web.Template.Context.getItemUTC</code> で
+<code>published</code> や <code>date</code> フィールドがない場合はファイル名から読むようになっている。これを使えばいい。しかし気に入らないのはその形式で、 <code>YYYY-mm-dd-*</code> 固定となっているのだ。すべてのファイルを <code>YYYY-mm-dd-*</code> のように配置するのか。これは嫌だ。例えば年ごとにディレクトリを変えたい、しかし <code>YYYY/YYYY-mm-dd-*</code> は冗長だ。</p>
+
+<p>そこでソースを読みつつ <code>YYYY/mmdd*</code> の形式にできるようにした。まず <code>Hakyll.Web.Template.Context.field</code> 関数の型は</p>
+<div class="highlight haskell"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1</pre></td><td class="code"><pre><span class="n">field</span> <span class="o">::</span> <span class="kt">String</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="kt">Item</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">Compiler</span> <span class="kt">String</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">Context</span> <span class="n">a</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>となっており、</p>
+
+<ul>
+<li>第1引数にテンプレートからアクセスするためのキー名</li>
+<li>第2引数にその記事から文字列への変換関数</li>
+</ul>
+
+<p>を指定する。
+<code>toFilePath $ itemIdentifier item</code> でファイルパスが取得できるので、</p>
+<div class="highlight haskell"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7</pre></td><td class="code"><pre><span class="n">dateField</span> <span class="o">::</span> <span class="kt">String</span> <span class="o">-&gt;</span> <span class="kt">Context</span> <span class="kt">String</span>
+<span class="n">dateField</span> <span class="n">key</span> <span class="o">=</span> <span class="n">field</span> <span class="n">key</span> <span class="o">$</span> <span class="n">item</span> <span class="o">-&gt;</span> <span class="kr">do</span>
+    <span class="kr">let</span> <span class="n">name</span> <span class="o">=</span> <span class="n">toFilePath</span> <span class="o">$</span> <span class="n">itemIdentifier</span> <span class="n">item</span>
+        <span class="n">dirname</span> <span class="o">=</span> <span class="n">takeDirectory</span> <span class="n">name</span>
+        <span class="n">basename</span> <span class="o">=</span> <span class="n">takeBaseName</span> <span class="n">name</span>
+        <span class="n">dateString</span> <span class="o">=</span> <span class="n">takeFileName</span> <span class="n">dirname</span> <span class="o">++</span> <span class="n">take</span> <span class="mi">4</span> <span class="n">basename</span>
+    <span class="o">...</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>とすれば、 <code>*/YYYY/mmdd*</code> というファイルパスから
+<code>YYYYmmdd</code> 形式の文字列が得られる。これをよしなにフォーマットして <code>return</code> すればいい。一応フォーマット文字列も引数に取るようにして、最終的には次のようになった。</p>
+<div class="highlight haskell"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15</pre></td><td class="code"><pre><span class="kr">import</span> <span class="nn">Data.Time.Format</span> <span class="p">(</span><span class="nf">formatTime</span><span class="p">,</span> <span class="nf">parseTime</span><span class="p">)</span>
+<span class="kr">import</span> <span class="nn">System.FilePath</span> <span class="p">(</span><span class="nf">takeBaseName</span><span class="p">,</span> <span class="nf">takeDirectory</span><span class="p">,</span> <span class="nf">takeFileName</span><span class="p">)</span>
+<span class="kr">import</span> <span class="nn">System.Locale</span> <span class="p">(</span><span class="nf">defaultTimeLocale</span><span class="p">)</span>
+
+<span class="n">dateField</span> <span class="o">::</span> <span class="kt">String</span> <span class="o">-&gt;</span> <span class="kt">String</span> <span class="o">-&gt;</span> <span class="kt">Context</span> <span class="kt">String</span>
+<span class="n">dateField</span> <span class="n">key</span> <span class="n">format</span> <span class="o">=</span> <span class="n">field</span> <span class="n">key</span> <span class="o">$</span> <span class="nf">\</span><span class="n">item</span> <span class="o">-&gt;</span> <span class="kr">do</span>
+    <span class="kr">let</span> <span class="n">name</span> <span class="o">=</span> <span class="n">toFilePath</span> <span class="o">$</span> <span class="n">itemIdentifier</span> <span class="n">item</span>
+        <span class="n">dirname</span> <span class="o">=</span> <span class="n">takeDirectory</span> <span class="n">name</span>
+        <span class="n">basename</span> <span class="o">=</span> <span class="n">takeBaseName</span> <span class="n">name</span>
+        <span class="n">dateString</span> <span class="o">=</span> <span class="n">takeFileName</span> <span class="n">dirname</span> <span class="o">++</span> <span class="n">take</span> <span class="mi">4</span> <span class="n">basename</span>
+        <span class="n">time</span> <span class="o">::</span> <span class="kt">UTCTime</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="n">fromMaybe</span>
+            <span class="p">(</span><span class="ne">error</span> <span class="o">$</span> <span class="s">"file `"</span> <span class="o">++</span> <span class="n">name</span> <span class="o">++</span> <span class="s">"` doesn't match to format `%Y/%m%d*`"</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">parseTime</span> <span class="n">defaultTimeLocale</span> <span class="s">"%Y%m%d"</span> <span class="n">dateString</span><span class="p">)</span>
+    <span class="n">return</span> <span class="o">$</span> <span class="n">formatTime</span> <span class="n">defaultTimeLocale</span> <span class="n">format</span> <span class="n">time</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>これを使うには次のように <code>Context</code> を指定すれば良い。</p>
+<div class="highlight haskell"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4</pre></td><td class="code"><pre><span class="kr">import</span> <span class="nn">Data.Monoid</span> <span class="p">(</span><span class="nf">mconcat</span><span class="p">)</span>
+
+<span class="n">ctx</span> <span class="o">::</span> <span class="kt">Context</span> <span class="kt">String</span>
+<span class="n">ctx</span> <span class="o">=</span> <span class="n">mconcat</span> <span class="p">[</span> <span class="n">dateField</span> <span class="s">"published"</span> <span class="s">"%Y-%m-%d"</span><span class="p">,</span> <span class="n">defaultContext</span> <span class="p">]</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>また、記事の一覧などのページで <code>Hakyll.Web.Template.List.recentFirst</code>
+という関数を使いたかったのだがこれも <code>getItemUTC</code> を使っているため動かない。そこで単純にその記事のファイルパスを降順にソートする関数を定義してそれを代わりに使うことにした。</p>
+<div class="highlight haskell"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11</pre></td><td class="code"><pre><span class="kr">import</span> <span class="nn">Control.Arrow</span> <span class="p">((</span><span class="o">***</span><span class="p">))</span>
+<span class="kr">import</span> <span class="nn">Control.Monad</span> <span class="p">(</span><span class="nf">join</span><span class="p">)</span>
+<span class="kr">import</span> <span class="nn">Data.List</span> <span class="p">(</span><span class="nf">sortBy</span><span class="p">)</span>
+
+<span class="n">recentFirst</span> <span class="o">::</span> <span class="p">(</span><span class="kt">MonadMetadata</span> <span class="n">m</span><span class="p">,</span> <span class="kt">Functor</span> <span class="n">m</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">[</span><span class="kt">Item</span> <span class="n">a</span><span class="p">]</span> <span class="o">-&gt;</span> <span class="n">m</span> <span class="p">[</span><span class="kt">Item</span> <span class="n">a</span><span class="p">]</span>
+<span class="n">recentFirst</span> <span class="o">=</span> <span class="n">return</span> <span class="o">.</span> <span class="n">sortBy</span> <span class="p">(</span><span class="n">flip</span> <span class="n">cmp</span><span class="p">)</span>
+  <span class="kr">where</span>
+    <span class="n">cmp</span> <span class="o">::</span> <span class="kt">Item</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">Item</span> <span class="n">a</span> <span class="o">-&gt;</span> <span class="kt">Ordering</span>
+    <span class="n">cmp</span> <span class="o">=</span> <span class="n">curry</span> <span class="o">$</span> <span class="n">uncurry</span> <span class="n">compare</span> <span class="o">.</span> <span class="n">map'</span> <span class="p">(</span><span class="n">toFilePath</span> <span class="o">.</span> <span class="n">itemIdentifier</span><span class="p">)</span>
+    <span class="n">map'</span> <span class="o">::</span> <span class="p">(</span><span class="n">a</span> <span class="o">-&gt;</span> <span class="n">b</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+    <span class="n">map'</span> <span class="o">=</span> <span class="n">join</span> <span class="p">(</span><span class="o">***</span><span class="p">)</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>本当は <code>description</code> を書くのも面倒なので、自動でその記事のタイトルと最初のパラグラフあたりをとってくるようにできないかと思っている。これは後で試す。</p>
+
+<h3>デザイン</h3>
+
+<p>デザインは悩みの種だったが、適当に CSS テンプレートを探して気に入ったものを使うことにした。</p>
+
+<ul>
+<li><a href="http://www.coolwebwindow.com/">http://www.coolwebwindow.com/</a>
+
+<ul>
+<li>商用サイト向けCSSテンプレート No.16</li>
+</ul></li>
+</ul>
+
+<p>商用サイト向けと書いてあるが個人でも問題ないようなのでありがたくいただいた。横幅や文字サイズなど少しだけカスタマイズし、またソースコードハイライト用の CSS も書いて使っている。</p>
+
+<p>右上に表示しているアイコンはそれぞれ次の 32px のものを使った。
+Feed Icons は適当に編集してある。</p>
+
+<ul>
+<li><a href="http://feedicons.com/">Feed Icons</a></li>
+<li><a href="https://dev.twitter.com/docs/image-resources">Image Resources</a> (Twitter 公式)</li>
+<li><a href="https://github.com/logos">GitHub Logos and Usage</a> (GitHub 公式)</li>
+</ul>
+
+<h3>サーバ</h3>
+
+<p>個人用途の VPS では <a href="http://vps.sakura.ad.jp/">さくらの VPS</a> が一番安定なのだけど、どうせ静的ファイルを置くだけなので安さをとって
+<a href="http://dream.jp/vps/">ServersMan@VPS</a> にした。安いだけあってなかなか厳しいスペックだけどなんとかなるだろう。ちなみに Mighttpd で立てた HTTP サーバに ab でベンチとったら 700 QPS くらいだった。まあこんなにアクセスが来ることはたぶんない。</p>
+
+<p>ディストリビューションは CentOS に嫌気がさしていたので Ubuntu で。ドメインはずっとお金を払いつつもほとんど使っていなかった daimatz.net を使う。</p>
+
+<p>流行の言葉に <a href="https://www.google.co.jp/search?q=infrastructure+as+code&amp;lr=lang_ja">Infrastructure as
+Code</a>
+というものがある。サーバ設定を完全にスクリプトに落としこんでしまい、手作業をなくすという考え方だ。これまでの経験から自分個人が運用しているサーバは頻繁にリプレースしたくなるものと思っていたが、これは「もっとよい構築方法があるはず」とか「設定を整理しておこう」という意識が働いているからだと思った。流行に乗ってサーバ設定を完全にコードに落としこんでしまうことにすれば新しいソフトウェアを使うときが来ても安心である。</p>
+
+<p>サーバ設定ツールとして
+<a href="http://www.getchef.com/chef/">Chef</a>,
+<a href="http://www.ansibleworks.com/">Ansible</a>,
+<a href="http://fabfile.org/">Fabric</a> を試してきたが、
+Fabric が一番手に馴染んだのでそれを使っている。冪等性とか言われているけど実際完全に冪等性を担保するのは難しいと思っていて、いっそ冪等性を完全に捨てても使いやすいものを使う方針である。やっぱ冪等性ほしいわ〜となったときに
+<a href="https://github.com/sebastien/cuisine">cuisine</a> は使うかもしれない。</p>
+
+<h2>まとめのような何か</h2>
+
+<p>Hakyll というか Haskell の良いところで型を見れば大体の処理がわかるというのがあって、今回も大きな困難なく作ることができた。
+Scala を最近書いているが Scala にはあまりその文化がないように感じていて、どうしても実装を見なければいけないことが多いと思う。というか Scaladoc を見るよりコードを見るほうが早いことが多い。そのぶんコードを読む習慣がついたのはよかったのだけど、やはり Haskell の文化が恋しいなあと思うわけです。あと <a href="http://www.mew.org/~kazu/proj/ghc-mod/">ghc-mod</a>
+がとても使いやすい。 <a href="https://github.com/eagletmt/ghcmod-vim">Vim から使える</a>
+のもすばらしい。</p>
+
+<p>環境作ったのできちんとアウトプットしていこうと思った。</p>
+
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'daimatz-net'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+   </div><!-- /#contents-->
+   <div id="pageTop">
+      <a href="#top">ページのトップへ戻る</a>
+   </div><!-- /#pageTop-->
+   <div id="footer">
+      <div class="copyright">
+          <p>Copyright &copy; 2014 daimatz</p>
+      </div>
+   </div><!-- /#footer-->
+</div><!-- /#top-->
+</body>
+</html>

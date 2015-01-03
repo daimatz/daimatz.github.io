@@ -1,8 +1,7 @@
-<% article = page_articles[0] %>
 <% wrap_layout :layout do %>
   <p class="info">
-    Posted on <%= article.date.strftime(config[:time_format]) %>
-    tags: <%= article.tags.map { |tag|
+    Posted on <%= current_article.date.strftime(config[:time_format]) %>
+    tags: <%= current_article.tags.map { |tag|
       link_to tag, "/text/#{tag}.html"
     }.join(', ') %>
   </p>

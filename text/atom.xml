@@ -4,10 +4,53 @@
   <id>http://daimatz.net/text</id>
   <link href="http://daimatz.net/text"/>
   <link href="http://daimatz.net/text/atom.xml" rel="self"/>
-  <updated>2014-08-29T15:00:00+00:00</updated>
+  <updated>2015-03-10T15:00:00+00:00</updated>
   <author>
     <name>daimatz</name>
   </author>
+  <entry>
+    <title>Some good revs are not ancestor of the bad rev.</title>
+    <link rel="alternate" href="http://daimatz.net/text/2015/0311-git-bisect.html"/>
+    <id>http://daimatz.net/text/2015/0311-git-bisect.html</id>
+    <published>2015-03-10T15:00:00+00:00</published>
+    <updated>2015-03-10T15:00:00+00:00</updated>
+    <author>
+      <name>daimatz</name>
+    </author>
+    <content type="html">&lt;div class="highlight shell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;git bisect start
+git bisect good 98765432
+git bisect bad 12345678
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;すると&lt;/p&gt;
+&lt;div class="highlight plaintext"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;Some good revs are not ancestor of the bad rev.
+git bisect cannot work properly in this case.
+Maybe you mistake good and bad revs?
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;と言われることがあります。本人は至ってまじめなんですが。これ、実は&lt;strong&gt;過去にあったバグがいつ直ったか&lt;/strong&gt;を探そうとしています。本来 &lt;code&gt;git bisect&lt;/code&gt; は&lt;strong&gt;正常に動いていたものがいつバグったか&lt;/strong&gt;を探すものです。意味が逆になっているのですが、 &lt;code&gt;git bisect&lt;/code&gt; を「要は二分探索するんだろー」と思っているとハマります。ハマりました。&lt;/p&gt;
+
+&lt;p&gt;workaround としては、 &lt;code&gt;good&lt;/code&gt; と &lt;code&gt;bad&lt;/code&gt; の意味を逆にすることです。つまり&lt;/p&gt;
+&lt;div class="highlight shell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
+2
+3&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;git bisect start
+git bisect good 12345678 &lt;span class="c"&gt;# バグっているコミット&lt;/span&gt;
+git bisect bad 98765432  &lt;span class="c"&gt;# バグがいつの間にか直っていたコミット&lt;/span&gt;
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
+&lt;/div&gt;
+
+&lt;p&gt;として、 bisect 中もバグが再現したら &lt;code&gt;git bisect good&lt;/code&gt;, 直ったら
+&lt;code&gt;git bisect bad&lt;/code&gt; としましょう。&lt;/p&gt;
+
+&lt;p&gt;混乱しそう。&lt;/p&gt;
+</content>
+  </entry>
   <entry>
     <title>Middleman と GitHub Pages でブログを作った話</title>
     <link rel="alternate" href="http://daimatz.net/text/2014/0830-middleman-github-pages.html"/>
@@ -1032,7 +1075,7 @@ n 回のリクエストを行いたいので、固定頻度で呼ばれる Runne
     <author>
       <name>daimatz</name>
     </author>
-    <content type="html">&lt;p&gt;&lt;img src="/img/0212-ff6/top.jpg" /&gt;&lt;/p&gt;
+    <content type="html">&lt;p&gt;&lt;img src="/text/2014/0212-ff6/top.jpg" /&gt;&lt;/p&gt;
 
 &lt;p&gt;FF6 が Android で出ているのでやった。&lt;/p&gt;
 
@@ -1513,219 +1556,6 @@ Injection の臭いがしてきました。&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="https://github.com/daimatz/CakePattern"&gt;daimatz/CakePattern&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
-</content>
-  </entry>
-  <entry>
-    <title>サイト作った</title>
-    <link rel="alternate" href="http://daimatz.net/text/2014/0126-hakyll.html"/>
-    <id>http://daimatz.net/text/2014/0126-hakyll.html</id>
-    <published>2014-01-25T15:00:00+00:00</published>
-    <updated>2014-01-25T15:00:00+00:00</updated>
-    <author>
-      <name>daimatz</name>
-    </author>
-    <content type="html">&lt;h2&gt;作ってみた&lt;/h2&gt;
-
-&lt;p&gt;もう何番煎じかわからないレベルだけど &lt;a href="http://jaspervdj.be/hakyll/"&gt;Hakyll&lt;/a&gt;
-と &lt;a href="http://mew.org/~kazu/proj/mighttpd/"&gt;Mighttpd&lt;/a&gt; で作ってみた。&lt;/p&gt;
-
-&lt;p&gt;Hakyll は Ruby 製の &lt;a href="http://jekyllrb.com/"&gt;Jekyll&lt;/a&gt; の Haskell クローンで、これらは
-&lt;a href="https://www.google.co.jp/search?q=%E9%9D%99%E7%9A%84%E3%82%B5%E3%82%A4%E3%83%88%E3%82%B8%E3%82%A7%E3%83%8D%E3%83%AC%E3%83%BC%E3%82%BF&amp;amp;lr=lang_ja"&gt;静的サイトジェネレータ&lt;/a&gt;
-と呼ばれる類のソフトウェアである。
-Hakyll はバックグラウンドに &lt;a href="http://johnmacfarlane.net/pandoc/"&gt;Pandoc&lt;/a&gt;
-を使っており Pandoc のサポートする書式ならなんでも使える (たぶん) 。
-Ruby も好きなので Jekyll を使うのもアリだったが、遠い昔よくわからずに使ってみてなんだかよくわからんなあという印象が先行してしまったため今回は Hakyll にした。&lt;/p&gt;
-
-&lt;p&gt;また Mighttpd (マイティー) は Haskell 製の HTTP サーバで、
-&lt;a href="http://nginx.org/"&gt;nginx&lt;/a&gt; よりパフォーマンスが出るらしい。ソースコードは1500行程度で非常にシンプル。今回は使うだけで中身を全然触れていないのだけどそのうちこれも読む。&lt;/p&gt;
-
-&lt;p&gt;作成の際には &lt;a href="http://jaspervdj.be/hakyll/"&gt;Hakyll 公式ページ&lt;/a&gt; はもちろん、このネタの日本での第一人者と思われる
-&lt;a href="http://tanakh.jp/posts/2011-11-05-haskell-infra.html"&gt;@tanakhさんのページ&lt;/a&gt;
-も大いに参考にした。&lt;/p&gt;
-
-&lt;h2&gt;経緯など&lt;/h2&gt;
-
-&lt;p&gt;これまでに何度か自分のブログを作ったことはあった。最初は &lt;a href="http://d.hatena.ne.jp/"&gt;はてなダイアリー&lt;/a&gt; 、次は
-&lt;a href="http://pages.github.com/"&gt;GitHub Pages&lt;/a&gt; を使ったもので、最後に &lt;a href="http://hatenablog.com/"&gt;はてなブログ&lt;/a&gt; である。しかしそのどれもが半年〜1年ほどしか続かなかった。気分を変えるために異なるサービスをいくつか使ってみたが、結局長続きするものはなかった。&lt;/p&gt;
-
-&lt;p&gt;なぜ長続きしなかったのか。生活環境の変化により文章を書くのが厳しくなったとか、デザインがみんな同じで気に入らなかったとか、とか、そういう話はある。しかし重要なのは本気度が足りないことだと思った。エンジニアは常に学ばなければ死んでしまう生き物である。学ぶ際にはインプットだけではあまり意味がなく、アウトプットこそが重要であることはよく知られている。これから自分のドメインを使ってきちんとアウトプットしていくという決意も込めて新しく作ることにした。自分のお金でやるならきちんと書くだろう。たぶん。この記事はその第一歩である。&lt;/p&gt;
-
-&lt;p&gt;最近大学の後輩たちの間で日記コンテンツを作るのが流行しており、本サイトもその影響を受けたことは否めない。&lt;/p&gt;
-
-&lt;h2&gt;技術的な話&lt;/h2&gt;
-
-&lt;h3&gt;Hakyll&lt;/h3&gt;
-
-&lt;p&gt;ルーティングの書き方など最初は見よう見まねであったが、しばらくいじると感覚がつかめてくる。そこで少し複雑な設定も行ったのでそれについて書くことにする。例えば Hakyll では記事のメタデータを以下のようなフォーマットで記事の先頭に記述する。&lt;/p&gt;
-&lt;div class="highlight markdown"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
-2
-3
-4
-5&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="p"&gt;----&lt;/span&gt;
-title: タイトル
-description: 概要
-&lt;span class="gh"&gt;published: 2014-01-05
-----
-&lt;/span&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
-&lt;/div&gt;
-
-&lt;p&gt;ここで横着な私は &lt;code&gt;published&lt;/code&gt; を書くのが面倒くさいと思った。そこで見てみると、世の Hakyll を使っているサイトには URL が &lt;code&gt;YYYY-mm-dd&lt;/code&gt;
-の形式になっているものが多い。
-Hakyll のソースを見てみると確かに &lt;code&gt;Hakyll.Web.Template.Context.getItemUTC&lt;/code&gt; で
-&lt;code&gt;published&lt;/code&gt; や &lt;code&gt;date&lt;/code&gt; フィールドがない場合はファイル名から読むようになっている。これを使えばいい。しかし気に入らないのはその形式で、 &lt;code&gt;YYYY-mm-dd-*&lt;/code&gt; 固定となっているのだ。すべてのファイルを &lt;code&gt;YYYY-mm-dd-*&lt;/code&gt; のように配置するのか。これは嫌だ。例えば年ごとにディレクトリを変えたい、しかし &lt;code&gt;YYYY/YYYY-mm-dd-*&lt;/code&gt; は冗長だ。&lt;/p&gt;
-
-&lt;p&gt;そこでソースを読みつつ &lt;code&gt;YYYY/mmdd*&lt;/code&gt; の形式にできるようにした。まず &lt;code&gt;Hakyll.Web.Template.Context.field&lt;/code&gt; 関数の型は&lt;/p&gt;
-&lt;div class="highlight haskell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;field&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;Item&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kt"&gt;Compiler&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kt"&gt;Context&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;
-&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
-&lt;/div&gt;
-
-&lt;p&gt;となっており、&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;第1引数にテンプレートからアクセスするためのキー名&lt;/li&gt;
-&lt;li&gt;第2引数にその記事から文字列への変換関数&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;を指定する。
-&lt;code&gt;toFilePath $ itemIdentifier item&lt;/code&gt; でファイルパスが取得できるので、&lt;/p&gt;
-&lt;div class="highlight haskell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
-2
-3
-4
-5
-6
-7&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="n"&gt;dateField&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kt"&gt;Context&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;
-&lt;span class="n"&gt;dateField&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;field&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt; &lt;span class="o"&gt;$&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kr"&gt;do&lt;/span&gt;
-    &lt;span class="kr"&gt;let&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;toFilePath&lt;/span&gt; &lt;span class="o"&gt;$&lt;/span&gt; &lt;span class="n"&gt;itemIdentifier&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;
-        &lt;span class="n"&gt;dirname&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;takeDirectory&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt;
-        &lt;span class="n"&gt;basename&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;takeBaseName&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt;
-        &lt;span class="n"&gt;dateString&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;takeFileName&lt;/span&gt; &lt;span class="n"&gt;dirname&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt; &lt;span class="n"&gt;take&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt; &lt;span class="n"&gt;basename&lt;/span&gt;
-    &lt;span class="o"&gt;...&lt;/span&gt;
-&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
-&lt;/div&gt;
-
-&lt;p&gt;とすれば、 &lt;code&gt;*/YYYY/mmdd*&lt;/code&gt; というファイルパスから
-&lt;code&gt;YYYYmmdd&lt;/code&gt; 形式の文字列が得られる。これをよしなにフォーマットして &lt;code&gt;return&lt;/code&gt; すればいい。一応フォーマット文字列も引数に取るようにして、最終的には次のようになった。&lt;/p&gt;
-&lt;div class="highlight haskell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;Data.Time.Format&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nf"&gt;formatTime&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nf"&gt;parseTime&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;System.FilePath&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nf"&gt;takeBaseName&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nf"&gt;takeDirectory&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nf"&gt;takeFileName&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;System.Locale&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nf"&gt;defaultTimeLocale&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-
-&lt;span class="n"&gt;dateField&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kt"&gt;Context&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;
-&lt;span class="n"&gt;dateField&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt; &lt;span class="n"&gt;format&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;field&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt; &lt;span class="o"&gt;$&lt;/span&gt; &lt;span class="nf"&gt;\&lt;/span&gt;&lt;span class="n"&gt;item&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kr"&gt;do&lt;/span&gt;
-    &lt;span class="kr"&gt;let&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;toFilePath&lt;/span&gt; &lt;span class="o"&gt;$&lt;/span&gt; &lt;span class="n"&gt;itemIdentifier&lt;/span&gt; &lt;span class="n"&gt;item&lt;/span&gt;
-        &lt;span class="n"&gt;dirname&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;takeDirectory&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt;
-        &lt;span class="n"&gt;basename&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;takeBaseName&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt;
-        &lt;span class="n"&gt;dateString&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;takeFileName&lt;/span&gt; &lt;span class="n"&gt;dirname&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt; &lt;span class="n"&gt;take&lt;/span&gt; &lt;span class="mi"&gt;4&lt;/span&gt; &lt;span class="n"&gt;basename&lt;/span&gt;
-        &lt;span class="n"&gt;time&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="kt"&gt;UTCTime&lt;/span&gt;
-        &lt;span class="n"&gt;time&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;fromMaybe&lt;/span&gt;
-            &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="ne"&gt;error&lt;/span&gt; &lt;span class="o"&gt;$&lt;/span&gt; &lt;span class="s"&gt;"file `"&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt; &lt;span class="n"&gt;name&lt;/span&gt; &lt;span class="o"&gt;++&lt;/span&gt; &lt;span class="s"&gt;"` doesn't match to format `%Y/%m%d*`"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-            &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;parseTime&lt;/span&gt; &lt;span class="n"&gt;defaultTimeLocale&lt;/span&gt; &lt;span class="s"&gt;"%Y%m%d"&lt;/span&gt; &lt;span class="n"&gt;dateString&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-    &lt;span class="n"&gt;return&lt;/span&gt; &lt;span class="o"&gt;$&lt;/span&gt; &lt;span class="n"&gt;formatTime&lt;/span&gt; &lt;span class="n"&gt;defaultTimeLocale&lt;/span&gt; &lt;span class="n"&gt;format&lt;/span&gt; &lt;span class="n"&gt;time&lt;/span&gt;
-&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
-&lt;/div&gt;
-
-&lt;p&gt;これを使うには次のように &lt;code&gt;Context&lt;/code&gt; を指定すれば良い。&lt;/p&gt;
-&lt;div class="highlight haskell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
-2
-3
-4&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;Data.Monoid&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nf"&gt;mconcat&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-
-&lt;span class="n"&gt;ctx&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="kt"&gt;Context&lt;/span&gt; &lt;span class="kt"&gt;String&lt;/span&gt;
-&lt;span class="n"&gt;ctx&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;mconcat&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt; &lt;span class="n"&gt;dateField&lt;/span&gt; &lt;span class="s"&gt;"published"&lt;/span&gt; &lt;span class="s"&gt;"%Y-%m-%d"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;defaultContext&lt;/span&gt; &lt;span class="p"&gt;]&lt;/span&gt;
-&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
-&lt;/div&gt;
-
-&lt;p&gt;また、記事の一覧などのページで &lt;code&gt;Hakyll.Web.Template.List.recentFirst&lt;/code&gt;
-という関数を使いたかったのだがこれも &lt;code&gt;getItemUTC&lt;/code&gt; を使っているため動かない。そこで単純にその記事のファイルパスを降順にソートする関数を定義してそれを代わりに使うことにした。&lt;/p&gt;
-&lt;div class="highlight haskell"&gt;&lt;table style="border-spacing: 0"&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class="gutter gl" style="text-align: right"&gt;&lt;pre class="lineno"&gt;1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11&lt;/pre&gt;&lt;/td&gt;&lt;td class="code"&gt;&lt;pre&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;Control.Arrow&lt;/span&gt; &lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="o"&gt;***&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
-&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;Control.Monad&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nf"&gt;join&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;Data.List&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nf"&gt;sortBy&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-
-&lt;span class="n"&gt;recentFirst&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="kt"&gt;MonadMetadata&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="kt"&gt;Functor&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;Item&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="kt"&gt;Item&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
-&lt;span class="n"&gt;recentFirst&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;return&lt;/span&gt; &lt;span class="o"&gt;.&lt;/span&gt; &lt;span class="n"&gt;sortBy&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;flip&lt;/span&gt; &lt;span class="n"&gt;cmp&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-  &lt;span class="kr"&gt;where&lt;/span&gt;
-    &lt;span class="n"&gt;cmp&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="kt"&gt;Item&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kt"&gt;Item&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="kt"&gt;Ordering&lt;/span&gt;
-    &lt;span class="n"&gt;cmp&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;curry&lt;/span&gt; &lt;span class="o"&gt;$&lt;/span&gt; &lt;span class="n"&gt;uncurry&lt;/span&gt; &lt;span class="n"&gt;compare&lt;/span&gt; &lt;span class="o"&gt;.&lt;/span&gt; &lt;span class="n"&gt;map'&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;toFilePath&lt;/span&gt; &lt;span class="o"&gt;.&lt;/span&gt; &lt;span class="n"&gt;itemIdentifier&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-    &lt;span class="n"&gt;map'&lt;/span&gt; &lt;span class="o"&gt;::&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;-&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;b&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-    &lt;span class="n"&gt;map'&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;join&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;***&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;
-&lt;/div&gt;
-
-&lt;p&gt;本当は &lt;code&gt;description&lt;/code&gt; を書くのも面倒なので、自動でその記事のタイトルと最初のパラグラフあたりをとってくるようにできないかと思っている。これは後で試す。&lt;/p&gt;
-
-&lt;h3&gt;デザイン&lt;/h3&gt;
-
-&lt;p&gt;デザインは悩みの種だったが、適当に CSS テンプレートを探して気に入ったものを使うことにした。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href="http://www.coolwebwindow.com/"&gt;http://www.coolwebwindow.com/&lt;/a&gt;
-
-&lt;ul&gt;
-&lt;li&gt;商用サイト向けCSSテンプレート No.16&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;商用サイト向けと書いてあるが個人でも問題ないようなのでありがたくいただいた。横幅や文字サイズなど少しだけカスタマイズし、またソースコードハイライト用の CSS も書いて使っている。&lt;/p&gt;
-
-&lt;p&gt;右上に表示しているアイコンはそれぞれ次の 32px のものを使った。
-Feed Icons は適当に編集してある。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;a href="http://feedicons.com/"&gt;Feed Icons&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href="https://dev.twitter.com/docs/image-resources"&gt;Image Resources&lt;/a&gt; (Twitter 公式)&lt;/li&gt;
-&lt;li&gt;&lt;a href="https://github.com/logos"&gt;GitHub Logos and Usage&lt;/a&gt; (GitHub 公式)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;h3&gt;サーバ&lt;/h3&gt;
-
-&lt;p&gt;個人用途の VPS では &lt;a href="http://vps.sakura.ad.jp/"&gt;さくらの VPS&lt;/a&gt; が一番安定なのだけど、どうせ静的ファイルを置くだけなので安さをとって
-&lt;a href="http://dream.jp/vps/"&gt;ServersMan@VPS&lt;/a&gt; にした。安いだけあってなかなか厳しいスペックだけどなんとかなるだろう。ちなみに Mighttpd で立てた HTTP サーバに ab でベンチとったら 700 QPS くらいだった。まあこんなにアクセスが来ることはたぶんない。&lt;/p&gt;
-
-&lt;p&gt;ディストリビューションは CentOS に嫌気がさしていたので Ubuntu で。ドメインはずっとお金を払いつつもほとんど使っていなかった daimatz.net を使う。&lt;/p&gt;
-
-&lt;p&gt;流行の言葉に &lt;a href="https://www.google.co.jp/search?q=infrastructure+as+code&amp;amp;lr=lang_ja"&gt;Infrastructure as
-Code&lt;/a&gt;
-というものがある。サーバ設定を完全にスクリプトに落としこんでしまい、手作業をなくすという考え方だ。これまでの経験から自分個人が運用しているサーバは頻繁にリプレースしたくなるものと思っていたが、これは「もっとよい構築方法があるはず」とか「設定を整理しておこう」という意識が働いているからだと思った。流行に乗ってサーバ設定を完全にコードに落としこんでしまうことにすれば新しいソフトウェアを使うときが来ても安心である。&lt;/p&gt;
-
-&lt;p&gt;サーバ設定ツールとして
-&lt;a href="http://www.getchef.com/chef/"&gt;Chef&lt;/a&gt;,
-&lt;a href="http://www.ansibleworks.com/"&gt;Ansible&lt;/a&gt;,
-&lt;a href="http://fabfile.org/"&gt;Fabric&lt;/a&gt; を試してきたが、
-Fabric が一番手に馴染んだのでそれを使っている。冪等性とか言われているけど実際完全に冪等性を担保するのは難しいと思っていて、いっそ冪等性を完全に捨てても使いやすいものを使う方針である。やっぱ冪等性ほしいわ〜となったときに
-&lt;a href="https://github.com/sebastien/cuisine"&gt;cuisine&lt;/a&gt; は使うかもしれない。&lt;/p&gt;
-
-&lt;h2&gt;まとめのような何か&lt;/h2&gt;
-
-&lt;p&gt;Hakyll というか Haskell の良いところで型を見れば大体の処理がわかるというのがあって、今回も大きな困難なく作ることができた。
-Scala を最近書いているが Scala にはあまりその文化がないように感じていて、どうしても実装を見なければいけないことが多いと思う。というか Scaladoc を見るよりコードを見るほうが早いことが多い。そのぶんコードを読む習慣がついたのはよかったのだけど、やはり Haskell の文化が恋しいなあと思うわけです。あと &lt;a href="http://www.mew.org/~kazu/proj/ghc-mod/"&gt;ghc-mod&lt;/a&gt;
-がとても使いやすい。 &lt;a href="https://github.com/eagletmt/ghcmod-vim"&gt;Vim から使える&lt;/a&gt;
-のもすばらしい。&lt;/p&gt;
-
-&lt;p&gt;環境作ったのできちんとアウトプットしていこうと思った。&lt;/p&gt;
 </content>
   </entry>
 </feed>

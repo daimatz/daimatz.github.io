@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ja" lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="Content-Style-Type" content="text/css" />
+<meta http-equiv="Content-Script-Type" content="text/javascript" />
+<meta http-equiv="imagetoolbar" content="no" />
+<meta name="description" content="daimatz の個人サイト" />
+<meta name="keywords" content="daimatz" />
+<link href="/css/normalize.css" rel="stylesheet" type="text/css" /><link href="/css/common.css" rel="stylesheet" type="text/css" /><link href="/css/syntax.css" rel="stylesheet" type="text/css" />
+<script src="/js/jquery.js" type="text/javascript"></script><script src="/js/common.js" type="text/javascript"></script>
+<title>Some good revs are not ancestor of the bad rev. - daimatz.net -</title>
+<link href="/img/favicon.ico" rel="icon" type="image/ico" />
+</head>
+<body>
+<div id="top">
+   <div id="header">
+      <h1><a href="/">daimatz.net</a></h1>
+      <div id="navi">
+         <ul>
+         <li><a href="/text/atom.xml"><img alt="rss" src="/img/rss.png" /></a></li>
+         <li><a href="https://twitter.com/daimatz"><img alt="twitter" src="/img/twitter.png" /></a></li>
+         <li><a href="https://github.com/daimatz"><img alt="twitter" src="/img/github.png" /></a></li>
+         </ul>
+      </div><!-- /#navi-->
+   </div><!-- /#header-->
+   <div id="menu">
+      <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/text/">Text</a></li>
+      <li><a href="/about.html">About</a></li>
+      </ul>
+   </div><!-- /#menu-->
+   <div id="contents">
+      <h1>Some good revs are not ancestor of the bad rev.</h1>
+        <p class="info">
+    Posted on 2015-03-11
+    tags: <a href="/text/git.html">git</a>
+  </p>
+  <div class="highlight shell"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3</pre></td><td class="code"><pre>git bisect start
+git bisect good 98765432
+git bisect bad 12345678
+</pre></td></tr></tbody></table>
+</div>
+
+<p>すると</p>
+<div class="highlight plaintext"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3</pre></td><td class="code"><pre>Some good revs are not ancestor of the bad rev.
+git bisect cannot work properly in this case.
+Maybe you mistake good and bad revs?
+</pre></td></tr></tbody></table>
+</div>
+
+<p>と言われることがあります。本人は至ってまじめなんですが。これ、実は<strong>過去にあったバグがいつ直ったか</strong>を探そうとしています。本来 <code>git bisect</code> は<strong>正常に動いていたものがいつバグったか</strong>を探すものです。意味が逆になっているのですが、 <code>git bisect</code> を「要は二分探索するんだろー」と思っているとハマります。ハマりました。</p>
+
+<p>workaround としては、 <code>good</code> と <code>bad</code> の意味を逆にすることです。つまり</p>
+<div class="highlight shell"><table style="border-spacing: 0"><tbody><tr><td class="gutter gl" style="text-align: right"><pre class="lineno">1
+2
+3</pre></td><td class="code"><pre>git bisect start
+git bisect good 12345678 <span class="c"># バグっているコミット</span>
+git bisect bad 98765432  <span class="c"># バグがいつの間にか直っていたコミット</span>
+</pre></td></tr></tbody></table>
+</div>
+
+<p>として、 bisect 中もバグが再現したら <code>git bisect good</code>, 直ったら
+<code>git bisect bad</code> としましょう。</p>
+
+<p>混乱しそう。</p>
+
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'daimatz-net'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+   </div><!-- /#contents-->
+   <div id="pageTop">
+      <a href="#top">ページのトップへ戻る</a>
+   </div><!-- /#pageTop-->
+   <div id="footer">
+      <div class="copyright">
+          <p>Copyright &copy; 2014 daimatz</p>
+      </div>
+   </div><!-- /#footer-->
+</div><!-- /#top-->
+</body>
+</html>

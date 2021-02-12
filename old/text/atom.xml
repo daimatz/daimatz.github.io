@@ -254,7 +254,7 @@ push という手順をとることになる。 master に push する用のリ�
 
 &lt;h2&gt;自分の発表&lt;/h2&gt;
 
-&lt;script async class="speakerdeck-embed" data-id="1701f420bb5a0131d135622ec9067e44" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"&gt;&lt;/script&gt;
+&lt;script async class="speakerdeck-embed" data-id="1701f420bb5a0131d135622ec9067e44" data-ratio="1.33333333333333" src="/old//speakerdeck.com/assets/embed.js"&gt;&lt;/script&gt;
 
 &lt;p&gt;&lt;br/&gt;&lt;/p&gt;
 
@@ -296,7 +296,7 @@ IO 処理だけさせてメインスレッドは次に進むということを�
 &lt;a href="http://www.zusaar.com/event/3477003"&gt;第7回若手Webエンジニア交流会&lt;/a&gt;で少しだけ話したのだが、昨日はより突っ込んだ話をした。
 Twitter のオープンソースのコードを読んでいると、 Scala の標準ライブラリに比べてケチくさい最適化を頑張っていないように見えるとか、 Twitter をしてもまだ Netty 4
 に乗り換えられない感じなんだろうなあとか。結論としてはジャバこそが実用的な言語ということになった。
-&lt;blockquote class="twitter-tweet" lang="en"&gt;&lt;p&gt;レジャスポ氏に「時代はジャバだ」と力説してしまった &lt;a href="https://twitter.com/search?q=%23functionalLT&amp;amp;src=hash"&gt;#functionalLT&lt;/a&gt;&lt;/p&gt;&amp;mdash; matsumoto (@daimatz) &lt;a href="https://twitter.com/daimatz/statuses/465398393276088321"&gt;May 11, 2014&lt;/a&gt;&lt;/blockquote&gt;&lt;script async src="//platform.twitter.com/widgets.js" charset="utf-8"&gt;&lt;/script&gt;
+&lt;blockquote class="twitter-tweet" lang="en"&gt;&lt;p&gt;レジャスポ氏に「時代はジャバだ」と力説してしまった &lt;a href="https://twitter.com/search?q=%23functionalLT&amp;amp;src=hash"&gt;#functionalLT&lt;/a&gt;&lt;/p&gt;&amp;mdash; matsumoto (@daimatz) &lt;a href="https://twitter.com/daimatz/statuses/465398393276088321"&gt;May 11, 2014&lt;/a&gt;&lt;/blockquote&gt;&lt;script async src="/old//platform.twitter.com/widgets.js" charset="utf-8"&gt;&lt;/script&gt;
 帰りで少し一緒になった &lt;a href="https://twitter.com/taiki45"&gt;@taiki45&lt;/a&gt; さんともそんな話をした。もうちょっと我々のアプローチがどの程度どうなのかという話とか、他のカイシャさんでそのへんどうしているのとかいう話を聞きたい気もした。&lt;/p&gt;
 
 &lt;p&gt;あとは、今回も Twitter でしか見たことのなかった何人かの人達の存在を確認した。&lt;/p&gt;
@@ -1075,7 +1075,7 @@ n 回のリクエストを行いたいので、固定頻度で呼ばれる Runne
     <author>
       <name>daimatz</name>
     </author>
-    <content type="html">&lt;p&gt;&lt;img src="/text/2014/0212-ff6/top.jpg" /&gt;&lt;/p&gt;
+    <content type="html">&lt;p&gt;&lt;img src="/old/text/2014/0212-ff6/top.jpg" /&gt;&lt;/p&gt;
 
 &lt;p&gt;FF6 が Android で出ているのでやった。&lt;/p&gt;
 
